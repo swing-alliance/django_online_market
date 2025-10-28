@@ -1,26 +1,18 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div id="app">
+    <user-login /> 
+    </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+// 1. 修改导入路径
+import UserLogin from './components/UserLogin.vue'; 
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    // 2. 修改注册名称
+    UserLogin 
   }
-}
+};
 </script>
-
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
