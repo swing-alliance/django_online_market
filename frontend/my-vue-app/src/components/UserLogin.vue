@@ -18,7 +18,7 @@
 
 <script>
 export default {
-  name: 'UserLogin',
+  name: "用户-登录",
   data() {
     return {
       username: '',
@@ -37,7 +37,9 @@ export default {
         this.errorMessage = '用户名或密码错误。';
       }
     }
+
   }
+
 };
 </script>
 
