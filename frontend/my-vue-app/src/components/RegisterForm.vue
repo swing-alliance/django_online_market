@@ -6,10 +6,7 @@
         <label for="username">用户名:</label>
         <input type="text" id="username" v-model="form.username" required>
       </div>
-      <div>
-        <label for="email">邮箱:</label>
-        <input type="email" id="email" v-model="form.email" required>
-      </div>
+
       <div>
         <label for="password">密码:</label>
         <input type="password" id="password" v-model="form.password" required>
@@ -17,6 +14,10 @@
       <div>
         <label for="password_confirm">确认密码:</label>
         <input type="password" id="password_confirm" v-model="form.password_confirm" required>
+      </div>
+            <div>
+        <label for="phone_number">电话号码:</label>
+        <input type="phone_number" id="phone_number" v-model="form.phone_number" required>
       </div>
       <button type="submit">注册</button>
       <p v-if="error" class="error">{{ error }}</p>
@@ -34,7 +35,7 @@ export default {
       // 这里的字段名必须和你的 Django Serializer 的字段名一致
       form: {
         username: '',
-        email: '',
+        phone_number: '',
         password: '',
         password_confirm: ''
       },
@@ -46,29 +47,21 @@ export default {
     async registerUser() {
       this.error = null;
       this.success = false;
-
-      // ⚠️ 替换成你的后端注册 API 路径
       const API_URL = 'http://127.0.0.1:8000/api/users/register/'; 
       
       try {
         const response = await axios.post(API_URL, this.form);
         console.log('注册成功响应:', response.data);
         this.success = true;
-        this.$emit('register-success', this.form.username);
-        // 清空表单
         this.form = {
             username: '',
-            email: '',
+            phone_number: '',
             password: '',
             password_confirm: ''
         };
-        // 可以在这里执行页面跳转
-        // this.$router.push('/login'); 
       } catch (err) {
         console.error('注册失败:', err.response);
-        // 处理后端返回的错误信息
         if (err.response && err.response.data) {
-            // 简单地显示所有字段的第一个错误信息
             const errors = err.response.data;
             let errorMessage = "注册失败：";
             for (const key in errors) {

@@ -4,38 +4,59 @@
     <form @submit.prevent="login">
       <div class="form-group">
         <label for="username">用户名:</label>
-        <input type="text" id="username" v-model="username" required>
+        <input type="text" id="username" v-model="form.username" required>
       </div>
       <div class="form-group">
         <label for="password">密码:</label>
-        <input type="password" id="password" v-model="password" required>
+        <input type="password" id="password" v-model="form.password" required>
       </div>
       <button type="submit">登录</button>
     </form>
     <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+    <p v-if="success" class=" success-massage">登录成功</p>
   </div>
 </template>
 
 <script>
+import axios from 'axios';
 export default {
   name: "用户-登录",
   data() {
     return {
+      form:{
       username: '',
-      password: '',
-      errorMessage: ''
+      password: ''
+      },
+
+    errorMessage: ''
     };
   },
   methods: {
-    login() {
-      // 实际的登录逻辑（例如，向后端 API 发送请求）
-      if (this.username === 'admin' && this.password === '123456') {
-        this.errorMessage = '';
-        alert('登录成功！');
-        // TODO: 实际应用中会进行路由跳转
-      } else {
-        this.errorMessage = '用户名或密码错误。';
+    async login() {
+      this.errorMessage = null;
+      this.success= false;
+      const LOGIN_API_URL='http://127.0.0.1:8000/api/users/login/';
+      try {
+        const response = await axios.post(LOGIN_API_URL, this.form);
+        console.log('登录成功响应:', response.data);
+        this.success = true;
+        this.form = {
+            username: '',
+            password: ''
+        };
+      }catch(err) {
+        console.error('登录失败:', err.response);
+        if (err.response && err.response.data) {
+            const errors = err.response.data;
+            let errorMessage = "登录失败：";
+            for (const key in errors) {
+                errorMessage += `${key}: ${errors[key][0]} `;
+                break; 
+            }
+            this.errorMessage = errorMessage;
+        }
       }
+
     }
 
   }

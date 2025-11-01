@@ -56,7 +56,7 @@
 }
 
 .global-footer {
-  background: #f8f9fa;
+  background: #115fac;
   padding: 1rem;
   text-align: center;
   border-top: 1px solid #dee2e6;

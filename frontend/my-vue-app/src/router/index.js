@@ -12,12 +12,16 @@ const routes = [
     path: '/register',
     name: 'register',
     component: () => import('../components/RegisterForm.vue')
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('../components/LoginForm.vue')
   }
   
 ]
 
 const router = createRouter({
-  // 使用 HTML5 History 模式（需要服务器支持）
   history: createWebHistory(),
   routes
 })
