@@ -7,6 +7,7 @@
       <router-link to="/hello">HelloWorld</router-link>
       <router-link to="/register">注册</router-link>
       <router-link to="/login">登录</router-link>
+      <router-link to="/test_auth">测试授权</router-link>
     </nav>
 
     <!-- 主要内容区域 - 只显示当前路由对应的组件 -->
@@ -16,7 +17,7 @@
 
     <!-- 全局页脚 -->
     <footer class="global-footer">
-      <p>&copy; 2024 我的应用</p>
+      <p>&copy; 2025 我的应用</p>
     </footer>
   </div>
 </template>

@@ -1,7 +1,8 @@
 from rest_framework import serializers
+from rest_framework.response import Response
 from django.contrib.auth import get_user_model, authenticate
 from django.utils.translation import gettext_lazy as _
-from django.db import transaction
+from django.db import transaction,models
 from .models import UserInfo  # 确保导入了您定义的 UserInfo 模型
 import re
 
@@ -55,13 +56,11 @@ class UserLoginSerializer(serializers.Serializer):
     token = serializers.CharField(label=_("Token"), read_only=True) 
 
     def validate(self, data):
-        print('调用我')
         username = data.get('username')
         password = data.get('password')
         if username and password:
             user = authenticate(request=self.context.get('request'),
                                 username=username, password=password)
-            print(user)
             if not user:
                 msg = _('账户或密码错误。') 
                 raise serializers.ValidationError(msg, code='authorization')
@@ -73,53 +72,11 @@ class UserLoginSerializer(serializers.Serializer):
     
 
 
-
-
-# --- 2. 详细信息序列化器 (用于仪表盘展示) ---
-class UserInfoSerializer(serializers.ModelSerializer):
-    # account_id 是只读的，由 default=generate_user_id 自动生成
-    account_id = serializers.CharField(read_only=True) 
-    # 获取头像的绝对 URL
-    avatar_url = serializers.SerializerMethodField()
-    
+class fetch_user_info(serializers.Serializer):
+    username = serializers.CharField(source='profile.username', read_only=True)
+    account_id = serializers.CharField(read_only=True)
     class Meta:
         model = UserInfo
-        # 列出所有需要展示或更新的字段
-        fields = ('phone_number', 'account_id', 'account_avatar', 'avatar_url', 'created_at')
-        read_only_fields = ('account_id', 'created_at') # 账户ID和创建时间只读
-    
-    def get_avatar_url(self, obj):
-        # 调用模型上的辅助方法
-        return obj.get_avatar_url()
+        fields = ('username', 'account_id')
 
-# --- 3. 用户信息更新序列化器 (UserInfoUpdateView 使用) ---
-class UserUpdateSerializer(serializers.ModelSerializer):
-    # 将 UserInfo 嵌套进来，用于展示和更新 UserInfo 字段
-    user_info = UserInfoSerializer() 
-    
-    class Meta:
-        model = User
-        fields = ('username', 'first_name', 'last_name', 'user_info')
-        read_only_fields = ('username',) # 假设 username 不允许修改
 
-    # 重写 update 方法以处理嵌套模型
-    def update(self, instance, validated_data):
-        user_info_data = validated_data.pop('user_info', {})
-        
-        # 1. 更新 User 模型字段
-        instance.first_name = validated_data.get('first_name', instance.first_name)
-        instance.last_name = validated_data.get('last_name', instance.last_name)
-        instance.save()
-        
-        # 2. 更新 UserInfo 模型字段
-        user_info = instance.user_info # 通过 related_name 访问
-        if user_info_data:
-            # 假设只允许更新 phone_number
-            user_info.phone_number = user_info_data.get('phone_number', user_info.phone_number)
-            # 处理头像文件上传（如果需要）
-            if 'account_avatar' in user_info_data:
-                user_info.account_avatar = user_info_data['account_avatar']
-            
-            user_info.save()
-
-        return instance

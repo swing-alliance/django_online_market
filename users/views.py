@@ -1,10 +1,11 @@
-# users/views.py
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
-from .serializers import UserRegistrationSerializer, UserInfoSerializer, UserUpdateSerializer, UserLoginSerializer
+from .serializers import UserRegistrationSerializer, UserLoginSerializer, fetch_user_info
+from .models import UserInfo
 
 User = get_user_model()
 
@@ -14,51 +15,41 @@ class UserRegistrationView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
 
 class UserLoginView(APIView):
-    print('调用登录视图')
+    """用户登录接口：返回 access 和 refresh 令牌"""
     serializer_class = UserLoginSerializer
     permission_classes = [permissions.AllowAny]
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data.pop('user')
+        serializer.validated_data.pop('password')
         tokens = get_tokens_for_user(user)
         serializer.validated_data['access_token'] = tokens['access_token']
-        serializer.validated_data['username'] = user.username
+        serializer.validated_data['refresh_token'] = tokens['refresh_token']
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
 
+class FetchUserInfoView(APIView):
+    permission_classes = [IsAuthenticated] 
+    def get(self, request):
+        try:
+            user_info_instance = request.user.user_info 
+        except UserInfo.DoesNotExist:
+            return Response(
+                {"detail": "用户资料记录不存在。"}, 
+                status=404
+            )
+        serializer = fetch_user_info(user_info_instance)
+        return Response(serializer.data, status=200)
 
-# --- 2. 用户仪表盘 (RetrieveAPIView) ---
-class UserDashboardView(generics.RetrieveAPIView):
-    """用户仪表盘/详情接口：返回当前用户的 User 和 UserInfo 数据"""
-    # 使用 UserUpdateSerializer 来展示 User 和 UserInfo 的嵌套数据
-    serializer_class = UserUpdateSerializer 
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_object(self):
-        # 确保只返回当前认证用户的数据
-        return self.request.user
-
-# --- 3. 用户基础信息更新 (UserInfoUpdateView) ---
-class UserInfoUpdateView(generics.UpdateAPIView):
-    """更新用户基础信息（如 first_name, last_name, phone_number, 昵称等）注意：头像更新可能需要单独的逻辑或使用 PUT/PATCH"""
-    serializer_class = UserUpdateSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_object(self):
-        # 确保只能更新自己的信息
-        return self.request.user
-    
-    # 使用 partial_update 来允许 PATCH 请求 (部分更新)
-    def partial_update(self, request, *args, **kwargs):
-        return super().partial_update(request, *args, **kwargs)
-
-# --- 4. 用户头像更新 (UserProfileUpdateView) ---
-# 这是一个更专业的做法，只处理头像文件上传
 
     
-
+class ProtectedTestView(APIView):
+    """这是一个需要 JWT 认证才能访问的测试 API。"""
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        return Response({"message": "已认证！Access Token 有效。"})
 
 
 def get_tokens_for_user(user):
@@ -68,3 +59,7 @@ def get_tokens_for_user(user):
         'access_token': str(refresh.access_token),
         'refresh_token': str(refresh),
     }
+
+
+
+

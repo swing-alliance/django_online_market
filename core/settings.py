@@ -1,7 +1,7 @@
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
-
+from datetime import timedelta
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure--7#w+ct^2wdvvc8ir)o+*jrmxl7llw(095g*aj9(2@9y8rhlu+'
 
@@ -22,8 +22,16 @@ INSTALLED_APPS = [
     'corsheaders',
     "rest_framework",
     "rest_framework.authtoken",
+    'rest_framework_simplejwt',
     'users',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
+
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -140,6 +148,12 @@ SIMPLE_JWT = {
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1), 
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=14), 
+}
 
 
 

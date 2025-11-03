@@ -39,6 +39,10 @@ export default {
       try {
         const response = await axios.post(LOGIN_API_URL, this.form);
         console.log('登录成功响应:', response.data);
+        const { access_token, refresh_token } = response.data; // 假设后端返回这两个键
+        localStorage.setItem('access_token', access_token);
+        localStorage.setItem('refresh_token', refresh_token);
+        console.log('登录成功，Token 已存储！');
         this.success = true;
         this.form = {
             username: '',
