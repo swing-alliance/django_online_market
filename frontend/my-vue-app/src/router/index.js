@@ -18,10 +18,6 @@ const routes = [
     name: 'login',
     component: () => import('../components/LoginForm.vue')
   },
-  {path: '/test_auth',
-  name: 'test_auth',
-  component: () => import('../components/ProtectedTest.vue')
-  },
   {
     path:'/personalpage',
     name:'personalpage',

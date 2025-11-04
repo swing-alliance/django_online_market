@@ -4,10 +4,13 @@ from django.contrib.auth import get_user_model, authenticate
 from django.utils.translation import gettext_lazy as _
 from django.db import transaction,models
 from .models import UserInfo  # 确保导入了您定义的 UserInfo 模型
+from django.conf import settings
+import os,base64
+from pathlib import Path
 import re
 
 User = get_user_model()
-
+DEFAULT_AVATAR_PATH = r'media\avatar\default_avatar.png'
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -75,8 +78,28 @@ class UserLoginSerializer(serializers.Serializer):
 class fetch_user_info(serializers.Serializer):
     username = serializers.CharField(source='profile.username', read_only=True)
     account_id = serializers.CharField(read_only=True)
+    account_avatar = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = UserInfo
-        fields = ('username', 'account_id')
-
-
+        fields = ('username', 'account_id', 'account_avatar')
+    def get_account_avatar(self, obj):
+        avatar_field = getattr(obj, 'account_avatar', None)
+        if avatar_field and avatar_field.name:
+            absolute_file_path = avatar_field.path
+        else:
+            absolute_file_path = os.path.join(settings.BASE_DIR,DEFAULT_AVATAR_PATH)
+        if not os.path.exists(absolute_file_path):
+            return None  # 文件不存在时返回空
+        try:
+            with open(absolute_file_path, "rb") as image_file:
+                encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+                return f"data:image/png;base64,{encoded_string}" 
+        except Exception as e:
+            print(f"Error reading or encoding image: {e}")
+            return None
+        
+class upload_avatar(serializers.Serializer):
+    account_avatar = serializers.ImageField(required=True)
+    class Meta:
+        model = UserInfo
+        fields = ('account_avatar',)

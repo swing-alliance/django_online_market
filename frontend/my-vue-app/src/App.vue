@@ -7,7 +7,7 @@
       <router-link to="/hello">HelloWorld</router-link>
       <router-link to="/register">注册</router-link>
       <router-link to="/login">登录</router-link>
-      <router-link to="/test_auth">测试授权</router-link>
+      <router-link to="/personalpage">个人主页</router-link>
     </nav>
 
     <!-- 主要内容区域 - 只显示当前路由对应的组件 -->
@@ -23,7 +23,7 @@
 </template>
 
 <script setup>
-// App.vue 只管理全局布局，不导入具体页面组件
+
 </script>
 
 <style>

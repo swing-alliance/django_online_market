@@ -2,15 +2,13 @@ from pathlib import Path
 from datetime import timedelta
 from decouple import config
 from datetime import timedelta
+import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure--7#w+ct^2wdvvc8ir)o+*jrmxl7llw(095g*aj9(2@9y8rhlu+'
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 ALLOWED_HOSTS = []
+MEDIA_URL=os.path.join(BASE_DIR,'media/')
 
-
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
