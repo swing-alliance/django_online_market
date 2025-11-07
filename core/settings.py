@@ -1,6 +1,5 @@
 from pathlib import Path
 from datetime import timedelta
-from decouple import config
 from datetime import timedelta
 import os
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -155,7 +154,6 @@ SIMPLE_JWT = {
 
 
 
-import os
 MEDIA_URL = '/media/'  
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  
 os.makedirs(MEDIA_ROOT, exist_ok=True)

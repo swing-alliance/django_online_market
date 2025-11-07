@@ -22,6 +22,7 @@
       <button type="submit">注册</button>
       <p v-if="error" class="error">{{ error }}</p>
       <p v-if="success" class="success">注册成功！</p>
+      <router-link to="/login">已有账号?</router-link>
     </form>
   </div>
 </template>

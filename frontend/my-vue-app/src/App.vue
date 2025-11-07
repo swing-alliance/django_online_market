@@ -1,13 +1,8 @@
-<!-- src/App.vue - 正确的写法 -->
 <template>
   <div id="app">
-    <!-- 全局导航 -->
     <nav class="global-nav">
       <router-link to="/">首页</router-link>
-      <router-link to="/hello">HelloWorld</router-link>
-      <router-link to="/register">注册</router-link>
-      <router-link to="/login">登录</router-link>
-      <router-link to="/personalpage">个人主页</router-link>
+      <router-link to="/personalpage">个人</router-link>
     </nav>
 
     <!-- 主要内容区域 - 只显示当前路由对应的组件 -->
@@ -23,6 +18,12 @@
 </template>
 
 <script setup>
+import router from '@/router'
+const refresh_token = localStorage.getItem('refresh_token');
+if (!refresh_token) {
+    router.push('/login');
+
+}
 
 </script>
 
@@ -45,6 +46,20 @@
   margin-right: 1rem;
   padding: 0.5rem 1rem;
   border-radius: 4px;
+  /* 确保链接有过渡效果，更平滑 */
+  transition: background-color 0.3s ease; 
+}
+
+/* 核心修复：移除浏览器默认的焦点轮廓线（边框） */
+.global-nav a:focus,
+.global-nav a:active {
+  outline: none; /* 移除点击或聚焦时的默认轮廓 */
+  box-shadow: none; /* 移除可能的阴影效果 */
+}
+
+/* 添加悬停效果 */
+.global-nav a:hover {
+  background: #34495e; /* 悬停时稍微变亮/变暗 */
 }
 
 .global-nav a.router-link-active {
@@ -53,7 +68,6 @@
 
 .main-content {
   flex: 1;
-  padding: 2rem;
 }
 
 .global-footer {
@@ -61,5 +75,6 @@
   padding: 1rem;
   text-align: center;
   border-top: 1px solid #dee2e6;
+  color: white; /* 增加页脚文本颜色 */
 }
 </style>

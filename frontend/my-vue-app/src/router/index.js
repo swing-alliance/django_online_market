@@ -1,11 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 // 导入你的目标组件
-import HelloWorld from '../components/HiPage.vue' // 假设它在 components 目录下
 const routes = [
   {
-    path: '/hello',
-    name: 'helloworld',
-    component: HelloWorld
+    path: '/',
+    name: 'mainpage',
+    component: () => import('../components/MainPage.vue')
   },
 
   {

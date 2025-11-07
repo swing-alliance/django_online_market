@@ -25,7 +25,6 @@ class UserInfo(models.Model):
         db_table = 'user_info'
         verbose_name = '用户信息'
         verbose_name_plural = '用户信息'
-
     def __str__(self):
         return f"{self.profile.username} (ID: {self.account_id})"
 
@@ -39,3 +38,38 @@ class UserInfo(models.Model):
             self.account_avatar.delete(save=False)
             self.account_avatar = None
             self.save()
+
+            
+class UserFriendRelationship(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_friends')
+    friend = models.ForeignKey(User, on_delete=models.CASCADE, related_name='friend_users')
+    relationship=models.CharField(max_length=10)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['user', 'friend']
+
+
+class FriendRequest(models.Model):
+    STATUS_PENDING = 1
+    STATUS_ACCEPTED = 2
+    STATUS_REJECTED = 3
+    
+    STATUS_CHOICES = (
+        (STATUS_PENDING, '待处理'),
+        (STATUS_ACCEPTED, '已接受'),
+        (STATUS_REJECTED, '已拒绝'),
+    )
+    from_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_requests', verbose_name="发送方")
+    to_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_requests', verbose_name="接收方")
+    status = models.SmallIntegerField(choices=STATUS_CHOICES, default=STATUS_PENDING, verbose_name="请求状态")
+    rejected_at = models.DateTimeField(null=True, blank=True, verbose_name="拒绝时间",default=None)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('from_user', 'to_user')
+        verbose_name = "好友请求"
+
+    def __str__(self):
+        return f"{self.from_user} -> {self.to_user} ({self.get_status_display()})"
