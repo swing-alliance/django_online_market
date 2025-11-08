@@ -47,7 +47,6 @@ const setupAxiosInterceptor = () => {
         axios.interceptors.response.use(
             response => response,
             async (error) => {
-                console.log('中断器调试 Error response:', error.response); // 打印错误响应
                 const originalRequest = error.config;
                 const status = error.response ? error.response.status : null;
                 if (status === 401 && !originalRequest._retry) {

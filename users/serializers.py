@@ -3,9 +3,11 @@ from rest_framework.response import Response
 from django.contrib.auth import get_user_model, authenticate
 from django.utils.translation import gettext_lazy as _
 from django.db import transaction,models
-from .models import UserInfo  # 确保导入了您定义的 UserInfo 模型
+from .models import UserInfo  ,UserFriendRelationship,FriendRequest
 from django.conf import settings
 import os,base64
+import datetime
+from datetime import timedelta
 from pathlib import Path
 import re
 
@@ -40,7 +42,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         phone_number = validated_data.pop('phone_number')
         validated_data.pop('password_confirm')
-        
         user = User.objects.create_user(
             username=validated_data['username'],
             password=validated_data['password']
@@ -98,8 +99,64 @@ class fetch_user_info(serializers.Serializer):
             print(f"Error reading or encoding image: {e}")
             return None
         
-class upload_avatar(serializers.Serializer):
-    account_avatar = serializers.ImageField(required=True)
-    class Meta:
-        model = UserInfo
-        fields = ('account_avatar',)
+class user_add_friend(serializers.Serializer):
+    account_id=serializers.CharField(label="用户id",allow_blank=True)
+    account_name=serializers.CharField(label="用户名称",allow_blank=True)
+
+    
+
+
+    def validate(self, data):
+        request = self.context.get('request')
+        from_account_instance = request.user
+        from_account_id_index = from_account_instance.pk
+        to_account_id = data.get('account_id')
+        to_accout_name = data.get('account_name')
+        has_id = bool(to_account_id)
+        has_name = bool(to_accout_name)
+        def get_db_to_user_id_index():
+            if has_id:
+                to_user_info_record = UserInfo.objects.get(account_id=to_account_id.strip())
+                return to_user_info_record.pk
+            elif has_name:
+                to_user_info_record = User.objects.get(username=to_accout_name.strip())
+                return to_user_info_record.pk
+        print('执行到这')
+        if has_id and has_name:
+            raise serializers.ValidationError("只能传入 'account_id' 或 'account_name' 中的一个，不能同时传入两者。")
+        if not has_id and not has_name:
+            raise serializers.ValidationError("请至少传入 'account_id' 或 'account_name' 中的一个。")
+        try:
+            db_to_user_id_index=get_db_to_user_id_index()
+            if db_to_user_id_index==from_account_id_index:
+                raise serializers.ValidationError("不能添加自己为好友。")
+            is_friend_already = UserFriendRelationship.objects.filter(user_id=from_account_id_index,friend_id=db_to_user_id_index).exists()
+            if is_friend_already:
+                raise serializers.ValidationError("已经是好友关系。")
+            requested_history = FriendRequest.objects.filter(from_user_id=from_account_id_index,to_user_id=db_to_user_id_index)
+            if requested_history:
+                for every_request in requested_history:
+                    if every_request.status==1:
+                        raise serializers.ValidationError("已经发送过好友请求。")
+                    elif every_request.status==2:
+                        raise serializers.ValidationError("已经是好友关系。")
+                    elif every_request.status==3:
+                        timenow=datetime.datetime.now()
+                        three_days = timedelta(days=3)
+                        time_difference = timenow - every_request.rejected_at
+                        allowday=every_request.rejected_at+three_days
+                        hours_left=(allowday-timenow)*24
+                        if time_difference < three_days:
+                            error_message = f"已经拒绝过好友请求，约 {hours_left} 小时可后再试。" 
+                            raise serializers.ValidationError(error_message)
+            data['from_account_id_index'] = from_account_id_index
+            data['db_to_user_id_index'] = db_to_user_id_index
+        except UserInfo.DoesNotExist:
+            raise serializers.ValidationError("传入的 accout_id 不存在。")
+        return data
+    @transaction.atomic
+    def create(self, validated_data):
+        from_account_id_index = validated_data.pop('from_account_id_index')
+        db_to_user_id_index = validated_data.pop('db_to_user_id_index')
+        FriendRequest.objects.create(from_user_id=from_account_id_index,to_user_id=db_to_user_id_index)
+        return validated_data

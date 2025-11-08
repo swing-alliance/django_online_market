@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, fetch_user_info
+from .serializers import UserRegistrationSerializer, UserLoginSerializer, fetch_user_info,user_add_friend
 from .models import UserInfo
 
 User = get_user_model()
@@ -63,3 +63,11 @@ def get_tokens_for_user(user):
 
 
 
+class AddFriendRequestView(APIView):
+    permission_classes = [IsAuthenticated] 
+    def post(self, request, *args, **kwargs):
+        serializer = user_add_friend(data=request.data,context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"status": "ok"})
+    

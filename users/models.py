@@ -56,11 +56,7 @@ class FriendRequest(models.Model):
     STATUS_ACCEPTED = 2
     STATUS_REJECTED = 3
     
-    STATUS_CHOICES = (
-        (STATUS_PENDING, '待处理'),
-        (STATUS_ACCEPTED, '已接受'),
-        (STATUS_REJECTED, '已拒绝'),
-    )
+    STATUS_CHOICES = ((STATUS_PENDING, '待处理'),(STATUS_ACCEPTED, '已接受'),(STATUS_REJECTED, '已拒绝'),)
     from_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_requests', verbose_name="发送方")
     to_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_requests', verbose_name="接收方")
     status = models.SmallIntegerField(choices=STATUS_CHOICES, default=STATUS_PENDING, verbose_name="请求状态")
