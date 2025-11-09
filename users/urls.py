@@ -1,6 +1,6 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import UserRegistrationView,UserLoginView,ProtectedTestView,FetchUserInfoView,AddFriendRequestView
+from .views import UserRegistrationView,UserLoginView,ProtectedTestView,FetchUserInfoView,AddFriendRequestView ,FetchUserNotification
 
 urlpatterns = [
     path('register/', UserRegistrationView.as_view(), name='register'),
@@ -9,4 +9,5 @@ urlpatterns = [
     path('test_auth/',ProtectedTestView.as_view(),name='test_auth'),
     path('fetch_user_info/',FetchUserInfoView.as_view(),name='fetch_user_info'),
     path('add_friend_request/',AddFriendRequestView.as_view(),name='add_friend_request'),
+    path('fetch_user_notifications/', FetchUserNotification.as_view(),name='fetch_user_notifications'),
 ]

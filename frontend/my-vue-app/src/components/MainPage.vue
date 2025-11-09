@@ -35,7 +35,8 @@ export default {
     // 检查输入是否为纯数字，以判断它是 ID 还是 Name
     isAccountId() {
       const trimmedInput = this.name_or_id.trim();
-      return /^\d+$/.test(trimmedInput) && trimmedInput.length > 0;
+      if(trimmedInput.length <7){return false;}
+      return true;
     },
     
     // 构建发送给后端的数据体

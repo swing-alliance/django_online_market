@@ -27,6 +27,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             'password_confirm': {'write_only': True}
         }
     def validate(self, data):
+        username=data['username']
+        if username.strip() == '':
+            raise serializers.ValidationError({"用户名不能为空。"})
+        if len(username) > 7:
+            raise serializers.ValidationError({"用户名最多 7 个字符。"})
         if data['password'] != data['password_confirm']:
             raise serializers.ValidationError({"password_confirm": "两次输入的密码不匹配。"})
         phone_number = data.get('phone_number')
@@ -86,6 +91,7 @@ class fetch_user_info(serializers.Serializer):
     def get_account_avatar(self, obj):
         avatar_field = getattr(obj, 'account_avatar', None)
         if avatar_field and avatar_field.name:
+            print('直接找到关联头像文件')
             absolute_file_path = avatar_field.path
         else:
             absolute_file_path = os.path.join(settings.BASE_DIR,DEFAULT_AVATAR_PATH)
@@ -102,10 +108,6 @@ class fetch_user_info(serializers.Serializer):
 class user_add_friend(serializers.Serializer):
     account_id=serializers.CharField(label="用户id",allow_blank=True)
     account_name=serializers.CharField(label="用户名称",allow_blank=True)
-
-    
-
-
     def validate(self, data):
         request = self.context.get('request')
         from_account_instance = request.user
@@ -116,11 +118,17 @@ class user_add_friend(serializers.Serializer):
         has_name = bool(to_accout_name)
         def get_db_to_user_id_index():
             if has_id:
-                to_user_info_record = UserInfo.objects.get(account_id=to_account_id.strip())
-                return to_user_info_record.pk
+                try:
+                    to_user_info_record = UserInfo.objects.get(account_id=to_account_id.strip())
+                    return to_user_info_record.pk
+                except UserInfo.DoesNotExist:
+                    raise serializers.ValidationError("用户ID不存在。")
             elif has_name:
-                to_user_info_record = User.objects.get(username=to_accout_name.strip())
-                return to_user_info_record.pk
+                try:
+                    to_user_info_record = User.objects.get(username=to_accout_name.strip())
+                    return to_user_info_record.pk
+                except User.DoesNotExist:
+                    raise serializers.ValidationError("用户名称不存在。")
         print('执行到这')
         if has_id and has_name:
             raise serializers.ValidationError("只能传入 'account_id' 或 'account_name' 中的一个，不能同时传入两者。")
@@ -160,3 +168,30 @@ class user_add_friend(serializers.Serializer):
         db_to_user_id_index = validated_data.pop('db_to_user_id_index')
         FriendRequest.objects.create(from_user_id=from_account_id_index,to_user_id=db_to_user_id_index)
         return validated_data
+    
+
+class fetch_user_notification(serializers.Serializer):
+    notify_name = serializers.CharField(default='好友请求')
+    notify_content = serializers.SerializerMethodField(default='你收到好友请求', read_only=True)
+
+    def has_notification(self,request):
+        friendrequest_instance=request.user.received_requests
+        for every_request in friendrequest_instance:
+            if every_request.status==1:
+                return True
+        return False
+
+
+class fetch_user_notification(serializers.Serializer):
+    notify_name = serializers.ReadOnlyField(default='好友请求')
+    notify_content = serializers.SerializerMethodField(read_only=True)
+    request_id = serializers.IntegerField(source='id', read_only=True) # 方便前端操作这条请求
+    from_user_id = serializers.PrimaryKeyRelatedField(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
+    def get_notify_content(self, obj):
+        try:
+            request_from_name = obj.from_user.username
+            return f"您收到了来自 {request_from_name} 的好友请求，请及时处理。"
+        except User.DoesNotExist:
+            return "您收到了来自未知用户的请求。"
+

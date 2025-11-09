@@ -33,7 +33,7 @@
 
       <!-- --------------------- 错误状态 --------------------- -->
       <div v-else class="error-state">
-        <p class="error-message">😔 {{ errorMessage || '获取用户信息失败。' }}</p>
+        <p class="error-message">🤨 {{ errorMessage || '获取用户信息失败。' }}</p>
         <router-link to="/login" class="link-button">
           转到登录
         </router-link>
