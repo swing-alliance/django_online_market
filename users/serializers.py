@@ -47,14 +47,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         phone_number = validated_data.pop('phone_number')
         validated_data.pop('password_confirm')
-        user = User.objects.create_user(
-            username=validated_data['username'],
-            password=validated_data['password']
-        )
-        UserInfo.objects.create(
-            profile=user, 
-            phone_number=phone_number
-        )
+        user = User.objects.create_user( username=validated_data['username'], password=validated_data['password'])
+        UserInfo.objects.create(profile=user, phone_number=phone_number)
         return user
 
 
@@ -139,7 +133,8 @@ class user_add_friend(serializers.Serializer):
             if db_to_user_id_index==from_account_id_index:
                 raise serializers.ValidationError("不能添加自己为好友。")
             is_friend_already = UserFriendRelationship.objects.filter(user_id=from_account_id_index,friend_id=db_to_user_id_index).exists()
-            if is_friend_already:
+            reverse_is_friend_already = UserFriendRelationship.objects.filter(user_id=db_to_user_id_index,friend_id=from_account_id_index).exists()
+            if is_friend_already or reverse_is_friend_already:
                 raise serializers.ValidationError("已经是好友关系。")
             requested_history = FriendRequest.objects.filter(from_user_id=from_account_id_index,to_user_id=db_to_user_id_index)
             if requested_history:
@@ -195,3 +190,45 @@ class fetch_user_notification(serializers.Serializer):
         except User.DoesNotExist:
             return "您收到了来自未知用户的请求。"
 
+
+
+class user_handle_request(serializers.Serializer):
+    request_id = serializers.IntegerField(required=True) 
+    action = serializers.ChoiceField(choices=['approve', 'reject'], required=True)
+    def validate(self, data):
+        request_id = data.get('request_id')
+        action = data.get('action')
+        try:
+            request_instance = FriendRequest.objects.get(id=request_id,status=1,to_user=self.context['request'].user)
+        except FriendRequest.DoesNotExist:
+            raise serializers.ValidationError({"错误": "请求不存在或者此请求与你无关。"})
+        if request_instance.status==2:
+            raise serializers.ValidationError({"错误": "已经是好友关系。"})
+        if request_instance.status==3:
+            raise serializers.ValidationError({"错误": "已经拒绝过好友请求。"})
+        if action not in ['approve', 'reject']:
+            raise serializers.ValidationError({"错误": "无效的操作。"})
+        return data
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        request_id = validated_data.get('request_id')
+        action = validated_data.get('action')
+        try:
+            request_instance = FriendRequest.objects.get(id=request_id)
+        except FriendRequest.DoesNotExist:
+            raise serializers.ValidationError({"错误": "请求不存在。"})
+        if action == 'approve':
+            request_instance.status = 2
+            UserFriendRelationship.objects.create(user=request_instance.to_user,friend=request_instance.from_user,relationship='好友')
+            reverse_request = FriendRequest.objects.filter(from_user=request_instance.to_user,to_user=request_instance.from_user).first()
+            reverse_request.delete()
+            request_instance.save()
+        elif action == 'reject':
+            request_instance.status = 3
+            request_instance.rejected_at = datetime.datetime.now()
+            request_instance.save()
+        return request_instance
+
+class user_fetch_friends(serializers.Serializer):
+    user_id = serializers.PrimaryKeyRelatedField(read_only=True)
+    friend_id = serializers.PrimaryKeyRelatedField(read_only=True)

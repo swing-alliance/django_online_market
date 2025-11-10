@@ -4,7 +4,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, fetch_user_info,user_add_friend,fetch_user_notification
+from .serializers import (UserRegistrationSerializer, UserLoginSerializer, fetch_user_info,
+                          user_add_friend,fetch_user_notification,user_handle_request)
 from .models import UserInfo
 
 User = get_user_model()
@@ -73,7 +74,7 @@ class AddFriendRequestView(APIView):
     
 
 
-class FetchUserNotification(APIView):
+class FetchUserNotificationView(APIView):
     permission_classes = [IsAuthenticated] 
     notification_queue = []
     def get(self, request):
@@ -88,3 +89,17 @@ class FetchUserNotification(APIView):
         print(serializer.data)
         return Response(serializer.data, status=200)
 
+class UserHandleRequestView(APIView):
+    permission_classes = [IsAuthenticated] 
+    def post(self, request, *args, **kwargs):
+        try:
+            request_instance = request.user.received_requests
+        except:
+            return Response(
+                {"错误": "处理失败。"}, 
+                status=404
+            )
+        serializer = user_handle_request(instance=request_instance,data=request.data,context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"status": "ok"})

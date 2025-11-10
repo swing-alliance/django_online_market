@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     'rest_framework_simplejwt',
     'users',
+    'channels',
 ]
 
 REST_FRAMEWORK = {
@@ -147,10 +148,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1), 
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=14), 
-}
+
 
 
 

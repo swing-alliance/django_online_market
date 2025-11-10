@@ -8,6 +8,16 @@
     </button>
     
     <p v-if="message" :class="isError ? 'error-message' : 'success-message'" v-html="message"></p>
+    <div class="message_ring" @click="openModal">
+      <img src="/image/ring.png" style="width: 30px; height: 30px;"/>
+    </div>
+                <div v-if="isModalVisible" class="modal-overlay">
+                    <div class="modal-content">
+                      <h2>通知</h2>
+                      <p>这里是弹出的内容...</p>
+                      <button @click="closeModal">关闭</button>
+                    </div>
+                </div>
   </div>
 </template>
 
@@ -28,6 +38,7 @@ export default {
       isLoading: false,
       message: '',
       isError: false,
+      isModalVisible: false
     };
   },
   
@@ -67,8 +78,6 @@ export default {
       }
       
       this.isLoading = true;
-
-      // ⭐️ 调试代码 1: 打印最终 Payload
       const payloadToSend = this.requestPayload;
       console.log('--- [DEBUG] 发送给后端的数据 ---');
       console.log('Payload:', payloadToSend);
@@ -114,7 +123,27 @@ export default {
       } finally {
         this.isLoading = false;
       }
+    },
+
+    openModal() {
+      this.isModalVisible = true; // 显示弹窗
+    },
+
+    closeModal() {
+      this.isModalVisible = false; // 关闭弹窗
     }
+
   }
 };
 </script>
+
+<style>
+.message_ring {
+max-width: 30px;  /* 设置最大宽度 */
+  max-height: 30px;  /* 设置最大高度 */
+  width: auto;  /* 自动调整宽度 */
+  height: auto;  
+}
+
+
+</style>
