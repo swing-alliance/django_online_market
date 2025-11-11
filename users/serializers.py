@@ -7,6 +7,7 @@ from .models import UserInfo  ,UserFriendRelationship,FriendRequest
 from django.conf import settings
 import os,base64
 import datetime
+from django.utils import timezone
 from datetime import timedelta
 from pathlib import Path
 import re
@@ -123,7 +124,6 @@ class user_add_friend(serializers.Serializer):
                     return to_user_info_record.pk
                 except User.DoesNotExist:
                     raise serializers.ValidationError("用户名称不存在。")
-        print('执行到这')
         if has_id and has_name:
             raise serializers.ValidationError("只能传入 'account_id' 或 'account_name' 中的一个，不能同时传入两者。")
         if not has_id and not has_name:
@@ -144,14 +144,15 @@ class user_add_friend(serializers.Serializer):
                     elif every_request.status==2:
                         raise serializers.ValidationError("已经是好友关系。")
                     elif every_request.status==3:
-                        timenow=datetime.datetime.now()
-                        three_days = timedelta(days=3)
-                        time_difference = timenow - every_request.rejected_at
-                        allowday=every_request.rejected_at+three_days
-                        hours_left=(allowday-timenow)*24
-                        if time_difference < three_days:
-                            error_message = f"已经拒绝过好友请求，约 {hours_left} 小时可后再试。" 
-                            raise serializers.ValidationError(error_message)
+                        print('执行到这')
+                        timenow=timezone.now()
+                        punish_days = timedelta(days=0)
+                        allowday=every_request.rejected_at+punish_days
+                        timeleft=allowday-timenow
+                        if timeleft > timedelta(0):
+                            hours_left = timeleft.total_seconds() / 3600
+                            raise serializers.ValidationError(f"已经拒绝过好友请求，约 {hours_left} 小时可后再试。")
+                        every_request.delete()
             data['from_account_id_index'] = from_account_id_index
             data['db_to_user_id_index'] = db_to_user_id_index
         except UserInfo.DoesNotExist:
@@ -194,7 +195,7 @@ class fetch_user_notification(serializers.Serializer):
 
 class user_handle_request(serializers.Serializer):
     request_id = serializers.IntegerField(required=True) 
-    action = serializers.ChoiceField(choices=['approve', 'reject'], required=True)
+    action = serializers.ChoiceField(choices=['approve', 'reject', 'ignore'], required=True)
     def validate(self, data):
         request_id = data.get('request_id')
         action = data.get('action')
@@ -206,7 +207,7 @@ class user_handle_request(serializers.Serializer):
             raise serializers.ValidationError({"错误": "已经是好友关系。"})
         if request_instance.status==3:
             raise serializers.ValidationError({"错误": "已经拒绝过好友请求。"})
-        if action not in ['approve', 'reject']:
+        if action not in ['approve', 'reject', 'ignore']:
             raise serializers.ValidationError({"错误": "无效的操作。"})
         return data
     @transaction.atomic
@@ -221,12 +222,15 @@ class user_handle_request(serializers.Serializer):
             UserFriendRelationship.objects.create(user=request_instance.to_user,friend=request_instance.from_user,relationship='好友')
             UserFriendRelationship.objects.create(user=request_instance.from_user,friend=request_instance.to_user,relationship='好友')
             reverse_request = FriendRequest.objects.filter(from_user=request_instance.to_user,to_user=request_instance.from_user).first()
-            reverse_request.delete()
+            if reverse_request:
+                reverse_request.delete()
             request_instance.delete()
         elif action == 'reject':
             request_instance.status = 3
             request_instance.rejected_at = datetime.datetime.now()
             request_instance.save()
+        elif action == 'ignore':
+            request_instance.delete()
         return request_instance
 
 class user_fetch_friends(serializers.Serializer):
