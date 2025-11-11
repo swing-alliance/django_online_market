@@ -218,11 +218,11 @@ class user_handle_request(serializers.Serializer):
         except FriendRequest.DoesNotExist:
             raise serializers.ValidationError({"错误": "请求不存在。"})
         if action == 'approve':
-            request_instance.status = 2
             UserFriendRelationship.objects.create(user=request_instance.to_user,friend=request_instance.from_user,relationship='好友')
+            UserFriendRelationship.objects.create(user=request_instance.from_user,friend=request_instance.to_user,relationship='好友')
             reverse_request = FriendRequest.objects.filter(from_user=request_instance.to_user,to_user=request_instance.from_user).first()
             reverse_request.delete()
-            request_instance.save()
+            request_instance.delete()
         elif action == 'reject':
             request_instance.status = 3
             request_instance.rejected_at = datetime.datetime.now()
@@ -230,5 +230,22 @@ class user_handle_request(serializers.Serializer):
         return request_instance
 
 class user_fetch_friends(serializers.Serializer):
-    user_id = serializers.PrimaryKeyRelatedField(read_only=True)
-    friend_id = serializers.PrimaryKeyRelatedField(read_only=True)
+    friend_id = serializers.SerializerMethodField(read_only=True)
+    def get_friend_id(self, obj):
+        try:
+            instances=UserFriendRelationship.objects.filter(user=self.context['request'].user,relationship='好友')
+            return [instance.friend_id for instance in instances]
+        except User.DoesNotExist:
+            return '没有好友。'
+
+
+class user_del_friend(serializers.Serializer):
+    friend_id = serializers.IntegerField(required=True)
+    def validate(self, data):
+        friend_id = data.get('friend_id')
+        try:
+            friend_instance = UserFriendRelationship.objects.get(user=self.context['request'].user,friend_id=friend_id,relationship='好友')
+            friend_instance.delete()
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"错误": "好友不存在。"})
+        return data

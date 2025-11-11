@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
 from .serializers import (UserRegistrationSerializer, UserLoginSerializer, fetch_user_info,
-                          user_add_friend,fetch_user_notification,user_handle_request)
+                          user_add_friend,fetch_user_notification,user_handle_request,user_fetch_friends,user_del_friend)
 from .models import UserInfo
 
 User = get_user_model()
@@ -79,7 +79,7 @@ class FetchUserNotificationView(APIView):
     notification_queue = []
     def get(self, request):
         try:
-            request_instance = request.user.received_requests 
+            request_instance = request.user.received_requests.filter(status=1) 
         except UserInfo.DoesNotExist:
             return Response(
                 {"detail": "用户资料记录不存在。"}, 
@@ -103,3 +103,47 @@ class UserHandleRequestView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"status": "ok"})
+    
+
+
+class UserFetchFriendView(APIView):
+    permission_classes = [IsAuthenticated] 
+    def get(self, request):
+        try:
+            request_instance = request.user
+        except UserInfo.DoesNotExist:
+            return Response(
+                {"detail": "用户资料记录不存在。"}, 
+                status=404
+            )
+        serializer = user_fetch_friends(instance=request_instance,context={'request': request})
+        return Response(serializer.data, status=200)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

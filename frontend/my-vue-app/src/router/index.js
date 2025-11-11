@@ -21,6 +21,16 @@ const routes = [
     path:'/personalpage',
     name:'personalpage',
     component: () => import('../components/PersonalPage.vue')
+  },
+  {
+    path:'/friendslist',
+    name:'friendslist',
+    component: () => import('../components/FriendsList.vue')
+  },
+  {
+    path:'/notification',
+    name:'notification',
+    component: () => import('../components/NotifyPage.vue')
   }
 
   
