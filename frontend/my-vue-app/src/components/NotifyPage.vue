@@ -16,6 +16,7 @@
           :notify_content="item.notify_content"  
           :created_at="item.created_at"    
           :request_id="item.request_id"  
+          @action="handleNotificationAction"
         />
 
     </div>
@@ -37,6 +38,22 @@ const loading = ref(true);
 const error = ref(null);
 
 const getfriendnotifyurl = 'http://127.0.0.1:8000/api/users/fetch_user_notifications/';
+
+const handleNotificationAction = (payload) => {
+    if (payload.success) {
+        const index = notifications.value.findIndex(
+            n => n.request_id === payload.request_id
+        );
+        if (index !== -1) {
+            notifications.value.splice(index, 1);
+            console.log(`请求 ${payload.request_id} (${payload.type}) 成功，组件已销毁。`);
+        }
+    } else {
+        console.error(`请求 ${payload.request_id} (${payload.type}) 失败:`, payload.message);
+    }
+}
+
+
 
 
 // --- 数据获取逻辑 (路由加载时自动触发) ---

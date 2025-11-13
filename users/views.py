@@ -65,6 +65,7 @@ def get_tokens_for_user(user):
 
 
 class AddFriendRequestView(APIView):
+    "用户添加好友"
     permission_classes = [IsAuthenticated] 
     def post(self, request, *args, **kwargs):
         serializer = user_add_friend(data=request.data,context={'request': request})
@@ -75,6 +76,7 @@ class AddFriendRequestView(APIView):
 
 
 class FetchUserNotificationView(APIView):
+    "用户获取自己的通知"
     permission_classes = [IsAuthenticated] 
     notification_queue = []
     def get(self, request):
@@ -86,10 +88,10 @@ class FetchUserNotificationView(APIView):
                 status=404
             )
         serializer = fetch_user_notification(instance=request_instance,many=True)
-        print(serializer.data)
         return Response(serializer.data, status=200)
 
 class UserHandleRequestView(APIView):
+    "用户处理好友请求"
     permission_classes = [IsAuthenticated] 
     def post(self, request, *args, **kwargs):
         try:
@@ -107,6 +109,7 @@ class UserHandleRequestView(APIView):
 
 
 class UserFetchFriendView(APIView):
+    "用户获取好友列表"
     permission_classes = [IsAuthenticated] 
     def get(self, request):
         try:

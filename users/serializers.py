@@ -17,6 +17,7 @@ DEFAULT_AVATAR_PATH = r'media\avatar\default_avatar.png'
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
+    """用户注册"""
     phone_number = serializers.CharField(required=True, max_length=15, label='手机号',write_only=True ) 
     password_confirm = serializers.CharField(style={'input_type': 'password'}, write_only=True, label='确认密码')
     class Meta:
@@ -55,6 +56,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 
 class UserLoginSerializer(serializers.Serializer):
+    """用户登录"""
     username = serializers.CharField(label='用户名', write_only=True)
     password = serializers.CharField(label='密码', style={'input_type': 'password'}, write_only=True)
     token = serializers.CharField(label=_("Token"), read_only=True) 
@@ -77,6 +79,7 @@ class UserLoginSerializer(serializers.Serializer):
 
 
 class fetch_user_info(serializers.Serializer):
+    """获取用户信息"""
     username = serializers.CharField(source='profile.username', read_only=True)
     account_id = serializers.CharField(read_only=True)
     account_avatar = serializers.SerializerMethodField(read_only=True)
@@ -101,6 +104,7 @@ class fetch_user_info(serializers.Serializer):
             return None
         
 class user_add_friend(serializers.Serializer):
+    """添加好友"""
     account_id=serializers.CharField(label="用户id",allow_blank=True)
     account_name=serializers.CharField(label="用户名称",allow_blank=True)
     def validate(self, data):
@@ -166,19 +170,11 @@ class user_add_friend(serializers.Serializer):
         return validated_data
     
 
-class fetch_user_notification(serializers.Serializer):
-    notify_name = serializers.CharField(default='好友请求')
-    notify_content = serializers.SerializerMethodField(default='你收到好友请求', read_only=True)
 
-    def has_notification(self,request):
-        friendrequest_instance=request.user.received_requests
-        for every_request in friendrequest_instance:
-            if every_request.status==1:
-                return True
-        return False
 
 
 class fetch_user_notification(serializers.Serializer):
+    "好友请求通知"
     notify_name = serializers.ReadOnlyField(default='好友请求')
     notify_content = serializers.SerializerMethodField(read_only=True)
     request_id = serializers.IntegerField(source='id', read_only=True) # 方便前端操作这条请求
@@ -194,6 +190,7 @@ class fetch_user_notification(serializers.Serializer):
 
 
 class user_handle_request(serializers.Serializer):
+    "用户处理好友请求"
     request_id = serializers.IntegerField(required=True) 
     action = serializers.ChoiceField(choices=['approve', 'reject', 'ignore'], required=True)
     def validate(self, data):
@@ -234,16 +231,51 @@ class user_handle_request(serializers.Serializer):
         return request_instance
 
 class user_fetch_friends(serializers.Serializer):
+    """获取好友列表"""
     friend_id = serializers.SerializerMethodField(read_only=True)
+    friend_account_name = serializers.SerializerMethodField(read_only=True)
+    friend_account_id = serializers.SerializerMethodField(read_only=True)
+
+    def get_relationship_instances(self):
+        user = self.context['request'].user
+        instances = UserFriendRelationship.objects.filter(
+            user=user, 
+            relationship='好友'
+        ).select_related('friend', 'friend__user_info')
+        return instances
+
     def get_friend_id(self, obj):
         try:
-            instances=UserFriendRelationship.objects.filter(user=self.context['request'].user,relationship='好友')
-            return [instance.friend_id for instance in instances]
-        except User.DoesNotExist:
-            return '没有好友。'
+            instances = self.get_relationship_instances()
+            friend_ids = [instance.friend.id for instance in instances]
+            print(friend_ids)
+            return friend_ids
+        except Exception:
+            return [] 
+        
+    def get_friend_account_name(self, obj):
+        try:
+            instances = self.get_relationship_instances()
+            friend_accout_names = [instance.friend.username for instance in instances]
+            print(friend_accout_names)
+            return friend_accout_names
+        except Exception:
+            return []
+
+    def get_friend_account_id(self, obj):
+        try:
+            instances = self.get_relationship_instances()
+            friend_accout_ids = [instance.friend.user_info.account_id 
+                                 for instance in instances 
+                                 if hasattr(instance.friend, 'user_info')] 
+            print(friend_accout_ids)
+            return friend_accout_ids
+        except Exception as e:
+            return []
 
 
 class user_del_friend(serializers.Serializer):
+    "用户删除好友"
     friend_id = serializers.IntegerField(required=True)
     def validate(self, data):
         friend_id = data.get('friend_id')
@@ -253,3 +285,13 @@ class user_del_friend(serializers.Serializer):
         except User.DoesNotExist:
             raise serializers.ValidationError({"错误": "好友不存在。"})
         return data
+    
+
+
+class boosted_fetch_user_info(serializers.ModelSerializer):
+    "更优秀的返回用户信息写法"
+    class Meta:
+        model = UserInfo
+        fields = '__all__'
+
+

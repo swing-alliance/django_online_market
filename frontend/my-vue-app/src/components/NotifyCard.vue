@@ -17,19 +17,19 @@
     <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 5px;">
       <button 
         @click="handleAction('approve')"
-        style="padding: 8px 15px; border: none; border-radius: 4px; color: blank;  cursor: pointer; font-size: 0.9em;"
+        style="padding: 8px 15px; border: none; border-radius: 4px; color: black;  cursor: pointer; font-size: 0.9em;"
       >
         接受
       </button>
       <button 
         @click="handleAction('reject')"
-        style="padding: 8px 15px; border: none; border-radius: 4px; color: blank;  cursor: pointer; font-size: 0.9em;"
+        style="padding: 8px 15px; border: none; border-radius: 4px; color: black;  cursor: pointer; font-size: 0.9em;"
       >
         拒绝
       </button>
       <button 
         @click="handleAction('ignore')"
-        style="padding: 8px 15px; border: none; border-radius: 4px; color: blank;  cursor: pointer; font-size: 0.9em;"
+        style="padding: 8px 15px; border: none; border-radius: 4px; color: black;  cursor: pointer; font-size: 0.9em;"
       >
         忽略
       </button>
