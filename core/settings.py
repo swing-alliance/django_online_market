@@ -6,9 +6,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure--7#w+ct^2wdvvc8ir)o+*jrmxl7llw(095g*aj9(2@9y8rhlu+'
 DEBUG = True
 ALLOWED_HOSTS = []
-MEDIA_URL=os.path.join(BASE_DIR,'media/')
-
-
+BASE_DOMAIN = 'http://127.0.0.1:8000/'
+if not DEBUG:
+    BASE_DOMAIN = 'https://api.mydomain.com/'
+MEDIA_URL=os.path.join(BASE_DIR,'users','media/')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'users','media/')
+os.makedirs(MEDIA_ROOT, exist_ok=True)
+print(f"MEDIA_ROOT is set to: {MEDIA_ROOT}")
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -152,6 +156,4 @@ CORS_ALLOW_CREDENTIALS = True
 
 
 
-MEDIA_URL = '/media/'  
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  
-os.makedirs(MEDIA_ROOT, exist_ok=True)
+

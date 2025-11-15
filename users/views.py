@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
 from .serializers import (UserRegistrationSerializer, UserLoginSerializer, fetch_user_info,
-                          user_add_friend,fetch_user_notification,user_handle_request,user_fetch_friends,user_del_friend)
+                          user_add_friend,fetch_user_notification,user_handle_request,user_fetch_friends,user_del_friend,BoostedFetchUserAvatarSerializer)
 from .models import UserInfo
 
 User = get_user_model()
@@ -123,7 +123,15 @@ class UserFetchFriendView(APIView):
         return Response(serializer.data, status=200)
 
 
-
+class BoostedFetchUserAvatarView(APIView):
+    permission_classes = [IsAuthenticated] 
+    def get(self, request, *args, **kwargs):
+        try:
+            user_info = UserInfo.objects.get(profile=request.user)
+        except UserInfo.DoesNotExist:
+            return Response({"detail": "User info not found."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = BoostedFetchUserAvatarSerializer(user_info)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 

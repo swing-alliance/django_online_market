@@ -13,7 +13,7 @@ from pathlib import Path
 import re
 
 User = get_user_model()
-DEFAULT_AVATAR_PATH = r'media\avatar\default_avatar.png'
+DEFAULT_AVATAR_PATH = r'media/avatar/default_avatar.png'
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -288,10 +288,52 @@ class user_del_friend(serializers.Serializer):
     
 
 
-class boosted_fetch_user_info(serializers.ModelSerializer):
-    "更优秀的返回用户信息写法"
+class BoostedFetchUserAvatarSerializer(serializers.ModelSerializer):
+    """
+    序列化器：返回带修改时间戳版本号的头像 URL，实现高效浏览器缓存。
+    """
+    # 使用 SerializerMethodField 自定义 avatar_url 的返回逻辑
+    avatar_url = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
-        model = UserInfo
-        fields = '__all__'
+        model = UserInfo 
+        # 只暴露我们自定义的 avatar_url 字段
+        fields = ('avatar_url',)
 
+    def get_avatar_url(self, obj):
+        """
+        核心逻辑：生成带有文件修改时间戳（mtime）查询参数的 URL。
+        """
+        # 模型的头像字段名是 'account_avatar'
+        avatar_file = obj.account_avatar
+        
+        # 1. 检查文件字段是否有效（即用户是否上传了图片）
+        # 'account_avatar' 字段 blank=True, null=True, 所以需要检查
+        # hasattr(avatar_file, 'url') 检查它是否是一个有效的 File 对象实例
+        if not avatar_file or not hasattr(avatar_file, 'url'):
+            # 如果没有上传，返回预定义的默认头像 URL
+            return f'{settings.BASE_DOMAIN}{DEFAULT_AVATAR_PATH}'
 
+        # 2. 获取文件的服务器本地绝对路径
+        try:
+            # .path 属性获取本地路径，用于 os.path.getmtime
+            file_path = avatar_file.path
+        except NotImplementedError:
+             # 如果使用云存储（如S3），FileField可能没有.path属性，直接返回URL
+             return avatar_file.url
+        except Exception:
+            # 数据库中有记录，但文件系统上文件缺失，返回默认URL
+            return f'{settings.BASE_DOMAIN}{DEFAULT_AVATAR_PATH}'
+
+        # 3. 获取文件的最后修改时间戳（mtime）
+        try:
+            # os.path.getmtime 返回 float，转换为 int 确保 URL 简洁
+            mtime = int(os.path.getmtime(file_path))
+        except FileNotFoundError:
+            # 再次处理文件找不到的情况
+            return f'{settings.BASE_DOMAIN}{DEFAULT_AVATAR_PATH}'
+        
+        # 4. 构造带版本号的 URL
+        # avatar_file.url 是 /media/... 路径 (MEDIA_URL + 相对路径)
+        # 最终返回如：/media/avatars/45/avatar_101.png?v=1678886400
+        return f"{avatar_file.url}?v={mtime}"
