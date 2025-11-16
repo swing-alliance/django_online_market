@@ -9,10 +9,9 @@ ALLOWED_HOSTS = []
 BASE_DOMAIN = 'http://127.0.0.1:8000/'
 if not DEBUG:
     BASE_DOMAIN = 'https://api.mydomain.com/'
-MEDIA_URL=os.path.join(BASE_DIR,'users','media/')
-MEDIA_ROOT = os.path.join(BASE_DIR, 'users','media/')
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media\\')
 os.makedirs(MEDIA_ROOT, exist_ok=True)
-print(f"MEDIA_ROOT is set to: {MEDIA_ROOT}")
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

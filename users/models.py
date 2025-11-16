@@ -11,7 +11,7 @@ def user_avatar_upload_path(instance, filename):
     """生成头像上传路径：avatars/用户ID/文件名"""
     ext = filename.split('.')[-1]
     new_filename = f"avatar_{instance.account_id}.{ext}"
-    return os.path.join('avatars', str(instance.user.id), new_filename)
+    return os.path.join('avatar', str(instance.profile.id), new_filename)
 
 class UserInfo(models.Model):
     profile = models.OneToOneField(User,on_delete=models.CASCADE,related_name='user_info',primary_key=True)

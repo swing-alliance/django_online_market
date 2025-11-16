@@ -2,10 +2,13 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.http import Http404
 from rest_framework.permissions import IsAuthenticated
+from django.db import transaction
 from django.contrib.auth import get_user_model
 from .serializers import (UserRegistrationSerializer, UserLoginSerializer, fetch_user_info,
-                          user_add_friend,fetch_user_notification,user_handle_request,user_fetch_friends,user_del_friend,BoostedFetchUserAvatarSerializer)
+                          user_add_friend,fetch_user_notification,user_handle_request,user_fetch_friends,user_del_friend,
+                          BoostedFetchUserAvatarSerializer,UserUploadAvatarSerializer)
 from .models import UserInfo
 
 User = get_user_model()
@@ -46,11 +49,6 @@ class FetchUserInfoView(APIView):
 
 
     
-class ProtectedTestView(APIView):
-    """这是一个需要 JWT 认证才能访问的测试 API。"""
-    permission_classes = [IsAuthenticated]
-    def get(self, request):
-        return Response({"message": "已认证！Access Token 有效。"})
 
 
 def get_tokens_for_user(user):
@@ -137,7 +135,17 @@ class BoostedFetchUserAvatarView(APIView):
 
 
 
-
+class UserUploadAvatarView(generics.UpdateAPIView):
+    """处理用户头像上传和更新的通用视图，使用 try/except 手动查找实例。"""
+    serializer_class = UserUploadAvatarSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    def get_object(self):
+        try:
+            instance = UserInfo.objects.get(profile=self.request.user)
+            return instance
+        except UserInfo.DoesNotExist:
+            raise Http404("用户没有对应的 UserInfo 记录。")
+    
 
 
 

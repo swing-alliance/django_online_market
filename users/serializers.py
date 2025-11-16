@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model, authenticate
 from django.utils.translation import gettext_lazy as _
 from django.db import transaction,models
 from .models import UserInfo  ,UserFriendRelationship,FriendRequest
+from django.core.exceptions import ValidationError
 from django.conf import settings
 import os,base64
 import datetime
@@ -248,7 +249,6 @@ class user_fetch_friends(serializers.Serializer):
         try:
             instances = self.get_relationship_instances()
             friend_ids = [instance.friend.id for instance in instances]
-            print(friend_ids)
             return friend_ids
         except Exception:
             return [] 
@@ -257,7 +257,6 @@ class user_fetch_friends(serializers.Serializer):
         try:
             instances = self.get_relationship_instances()
             friend_accout_names = [instance.friend.username for instance in instances]
-            print(friend_accout_names)
             return friend_accout_names
         except Exception:
             return []
@@ -268,7 +267,6 @@ class user_fetch_friends(serializers.Serializer):
             friend_accout_ids = [instance.friend.user_info.account_id 
                                  for instance in instances 
                                  if hasattr(instance.friend, 'user_info')] 
-            print(friend_accout_ids)
             return friend_accout_ids
         except Exception as e:
             return []
@@ -286,6 +284,17 @@ class user_del_friend(serializers.Serializer):
             raise serializers.ValidationError({"错误": "好友不存在。"})
         return data
     
+class UserUploadAvatarSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserInfo
+        fields = ['account_avatar']
+    def validate_account_avatar(self, value):
+        """验证上传的头像文件大小不超过 4MB"""
+        max_size = 4 * 1024 * 1024  # 4MB in bytes
+        if value and value.size > max_size:
+            raise serializers.ValidationError("文件大小不能超过 4MB。")
+        return value
+
 
 
 class BoostedFetchUserAvatarSerializer(serializers.ModelSerializer):
@@ -337,3 +346,10 @@ class BoostedFetchUserAvatarSerializer(serializers.ModelSerializer):
         # avatar_file.url 是 /media/... 路径 (MEDIA_URL + 相对路径)
         # 最终返回如：/media/avatars/45/avatar_101.png?v=1678886400
         return f"{avatar_file.url}?v={mtime}"
+
+
+
+
+
+
+

@@ -35,7 +35,7 @@ const routes = [
   {
     path:'/test',
     name:'test',
-    component: () => import('../components/avatar_test.vue')
+    component: () => import('../components/ProtectedTest.vue')
   }
   
 
