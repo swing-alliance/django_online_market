@@ -46,7 +46,6 @@ class UserFriendRelationship(models.Model):
     relationship=models.CharField(max_length=10,default='好友')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
     class Meta:
         unique_together = ['user', 'friend']
 

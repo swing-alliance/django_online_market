@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from django.db import transaction,models
 from .models import UserInfo  ,UserFriendRelationship,FriendRequest
 from django.core.exceptions import ValidationError
+from django.utils.functional import cached_property
 from django.conf import settings
 import os,base64
 import datetime
@@ -236,18 +237,16 @@ class user_fetch_friends(serializers.Serializer):
     friend_id = serializers.SerializerMethodField(read_only=True)
     friend_account_name = serializers.SerializerMethodField(read_only=True)
     friend_account_id = serializers.SerializerMethodField(read_only=True)
-
+    avatar_url = serializers.SerializerMethodField(read_only=True)
+    @cached_property
     def get_relationship_instances(self):
         user = self.context['request'].user
-        instances = UserFriendRelationship.objects.filter(
-            user=user, 
-            relationship='好友'
-        ).select_related('friend', 'friend__user_info')
+        instances = UserFriendRelationship.objects.filter(user=user, relationship='好友').select_related('friend', 'friend__user_info')
         return instances
 
     def get_friend_id(self, obj):
         try:
-            instances = self.get_relationship_instances()
+            instances = self.get_relationship_instances
             friend_ids = [instance.friend.id for instance in instances]
             return friend_ids
         except Exception:
@@ -255,7 +254,7 @@ class user_fetch_friends(serializers.Serializer):
         
     def get_friend_account_name(self, obj):
         try:
-            instances = self.get_relationship_instances()
+            instances = self.get_relationship_instances
             friend_accout_names = [instance.friend.username for instance in instances]
             return friend_accout_names
         except Exception:
@@ -263,12 +262,25 @@ class user_fetch_friends(serializers.Serializer):
 
     def get_friend_account_id(self, obj):
         try:
-            instances = self.get_relationship_instances()
+            instances = self.get_relationship_instances
             friend_accout_ids = [instance.friend.user_info.account_id 
                                  for instance in instances 
                                  if hasattr(instance.friend, 'user_info')] 
             return friend_accout_ids
         except Exception as e:
+            return []
+    
+    def get_avatar_url(self, obj):
+        try:
+            instances = self.get_relationship_instances
+            avatar_urls = [
+            instance.friend.user_info.account_avatar.url 
+            if instance.friend.user_info and instance.friend.user_info.account_avatar 
+            else None 
+            for instance in instances
+        ]
+            return avatar_urls
+        except Exception:
             return []
 
 

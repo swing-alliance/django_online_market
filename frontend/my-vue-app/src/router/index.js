@@ -25,7 +25,7 @@ const routes = [
   {
     path:'/friendslist',
     name:'friendslist',
-    component: () => import('../components/FriendsList.vue')
+    component: () => import('../components/FriendsPage.vue')
   },
   {
     path:'/notification',

@@ -2,9 +2,9 @@
   <div id="app">
     <nav class="global-nav">
       <router-link to="/">首页</router-link>
-      <router-link to="/personalpage">个人</router-link>
-      <router-link to="/friendslist">好友</router-link>
       <router-link to="/notification">通知</router-link>
+      <router-link to="/friendslist">好友</router-link>
+      <router-link to="/personalpage">个人</router-link>
       <router-link to="/test">测试</router-link>
     </nav>
 
@@ -66,7 +66,7 @@ if (!refresh_token) {
 }
 
 .global-nav a.router-link-active {
-  background: #42b883;
+  background: #87c3d7;
 }
 
 .main-content {
@@ -74,10 +74,10 @@ if (!refresh_token) {
 }
 
 .global-footer {
-  background: #115fac;
+  background: #f9f9fa;
   padding: 1rem;
   text-align: center;
   border-top: 1px solid #dee2e6;
-  color: white; /* 增加页脚文本颜色 */
+  color: rgb(18, 12, 12); /* 增加页脚文本颜色 */
 }
 </style>
