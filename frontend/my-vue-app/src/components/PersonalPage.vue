@@ -82,8 +82,8 @@ const fileInput = ref(null);
 
 const defaultAvatar = '/image/default_avatar.png'; // public/image/default_avatar.png
 
-const API_URL = 'http://127.0.0.1:8000/api/users/fetch_user_info/';
-const AVATAR_UPDATE_URL = 'http://127.0.0.1:8000/api/users/user_upload_avatar/';
+const API_URL = '/api/users/fetch_user_info/';
+const AVATAR_UPDATE_URL = '/api/users/user_upload_avatar/';
 
 // ==================== 双击触发 ====================
 const triggerFileInput = () => {
@@ -94,20 +94,14 @@ const triggerFileInput = () => {
 const handleAvatarChange = async (event) => {
   const file = event.target.files[0];
   if (!file) return;
-
   const originalUrl = userInfo.value.account_avatar;
   localAvatarPreview.value = URL.createObjectURL(file);
-
   const formData = new FormData();
   formData.append('account_avatar', file);
-
   isUploading.value = true;
   uploadError.value = '';
-
   try {
-    // 完全依赖拦截器处理 headers
     const response = await axios.patch(AVATAR_UPDATE_URL, formData);
-    
     userInfo.value.account_avatar = response.data.account_avatar;
     alert('头像更新成功！');
   } catch (error) {

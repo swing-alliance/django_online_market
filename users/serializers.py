@@ -61,16 +61,19 @@ class UserLoginSerializer(serializers.Serializer):
     """用户登录"""
     username = serializers.CharField(label='用户名', write_only=True)
     password = serializers.CharField(label='密码', style={'input_type': 'password'}, write_only=True)
-    token = serializers.CharField(label=_("Token"), read_only=True) 
 
     def validate(self, data):
         username = data.get('username')
         password = data.get('password')
+        request = self.context.get('request')
+        
         if username and password:
-            user = authenticate(request=self.context.get('request'),
-                                username=username, password=password)
+            user = authenticate(request=request, username=username, password=password)
             if not user:
                 msg = _('账户或密码错误。') 
+                raise serializers.ValidationError(msg, code='authorization')
+            if not user.is_active:
+                msg = _('用户账户未激活。')
                 raise serializers.ValidationError(msg, code='authorization')
         else:
             msg = _('必须提供用户名和密码。')
@@ -91,7 +94,6 @@ class fetch_user_info(serializers.Serializer):
     def get_account_avatar(self, obj):
         avatar_field = getattr(obj, 'account_avatar', None)
         if avatar_field and avatar_field.name:
-            print('直接找到关联头像文件')
             absolute_file_path = avatar_field.path
         else:
             absolute_file_path = os.path.join(settings.BASE_DIR,DEFAULT_AVATAR_PATH)

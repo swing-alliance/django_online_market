@@ -1,31 +1,42 @@
 from pathlib import Path
 from datetime import timedelta
-from datetime import timedelta
 import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure--7#w+ct^2wdvvc8ir)o+*jrmxl7llw(095g*aj9(2@9y8rhlu+'
 DEBUG = True
+
+
+
 ALLOWED_HOSTS = []
 BASE_DOMAIN = 'http://127.0.0.1:8000/'
 if not DEBUG:
     BASE_DOMAIN = 'https://api.mydomain.com/'
+    SECURE_COOKIES = True
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media\\')
 os.makedirs(MEDIA_ROOT, exist_ok=True)
 INSTALLED_APPS = [
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'corsheaders',
     "rest_framework",
-    "rest_framework.authtoken",
-    'rest_framework_simplejwt',
     'users',
     'channels',
 ]
+ASGI_APPLICATION = 'core.asgi.application'
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            # 确保这里的地址和端口与您的 Redis 服务器匹配
+            "hosts": [("localhost", 6379)], 
+        },
+    },
+}
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -44,7 +55,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
 ROOT_URLCONF = 'core.urls'
 
 TEMPLATES = [
@@ -130,7 +140,6 @@ REST_FRAMEWORK = {
     ),
 }
 
-
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
@@ -147,11 +156,14 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-CORS_ALLOW_ALL_ORIGINS = True
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 7
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 CORS_ALLOW_CREDENTIALS = True
-
-
-
+# 关键！让 Django 信任前端 8080 端口发来的 POST 请求（登录、表单等）
+CORS_ORIGIN_WHITELIST = [
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+]
 
 
 

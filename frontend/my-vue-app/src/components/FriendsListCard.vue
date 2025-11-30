@@ -22,23 +22,25 @@
 </template>
 
 <script setup>
-import { defineProps, ref } from 'vue';
+// 修正：使用命名导出 {} 来导入 ref
+import { ref } from 'vue';
 
 const props = defineProps({
-  avatarUrl: {
-    type: String,
-    default: '',
-  },
-  friendAccountName: {
-    type: String,
-    required: true, // 假设昵称是必需的
-  },
-  friendAccountId: {
-    type: [String, Number],
-    default: null,
-  },
+    avatarUrl: {
+        type: String,
+        default: '',
+    },
+    friendAccountName: {
+        type: String,
+        required: true, // 假设昵称是必需的
+    },
+    friendAccountId: {
+        type: [String, Number],
+        default: null,
+    },
 });
 
+// 使用 ref 创建一个响应式变量
 const defaultAvatarUrl = ref('/image/default_avatar.png');
 </script>
 

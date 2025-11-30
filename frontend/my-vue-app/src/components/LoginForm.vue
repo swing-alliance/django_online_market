@@ -3,7 +3,6 @@
     <form @submit.prevent="login">
       <h2>用户登录</h2>
       
-      <!-- 为了保持与注册组件的结构一致，这里移除了最外层的 <div> -->
       <div class="form-group">
         <label for="username">用户名:</label>
         <input type="text" id="username" v-model="form.username" required>
@@ -24,61 +23,64 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import axios from 'axios';
-import router from '@/router';
-export default {
-  name: "用户-登录",
-  data() {
-    return {
-      form:{
-      username: '',
-      password: ''
-      },
-      errorMessage: null,
-      success: false
-    };
-  },
-  methods: {
-    async login() {
-      this.errorMessage = null;
-      this.success = false;
-      const LOGIN_API_URL='http://127.0.0.1:8000/api/users/login/';
-      try {
-        const response = await axios.post(LOGIN_API_URL, this.form);
-        console.log('登录成功响应:', response.data);
-        const { access_token, refresh_token } = response.data;
-        localStorage.setItem('access_token', access_token);
-        localStorage.setItem('refresh_token', refresh_token);
-        
-        console.log('登录成功，Token 已存储！');
-        this.success = true;
-        this.form = {
-            username: '',
-            password: ''
-        };
-        
-      router.push('/personalpage');
+import { ref } from 'vue';
 
-      } catch(err) {
-        console.error('登录失败:', err.response);
-        let errorMsg = "登录失败，请检查网络或服务器。";
-        if (err.response && err.response.data) {
-            const errors = err.response.data;
-            // 尝试提取 Django Rest Framework (DRF) 的错误信息
-            if (errors.detail) {
-                errorMsg = `登录失败: ${errors.detail}`;
-            } else {
-                for (const key in errors) {
-                    // 只显示第一个字段的第一个错误
-                    errorMsg = `登录失败: ${errors[key][0]}`;
-                    break;
-                }
-            }
-        }
-        this.errorMessage = errorMsg;
-      }
+// 如果你的后端需要跨域携带 Cookie，请确保配置了 withCredentials
+// 例如: axios.defaults.withCredentials = true;
+
+const form = ref({
+  username: '',
+  password: '',
+});
+
+const errorMessage = ref('');
+const success = ref(false);
+
+const login = async () => {
+  errorMessage.value = '';
+  success.value = false;
+  try {
+    const response = await axios.post('/api/users/login/', {
+      username: form.value.username,
+      password: form.value.password,
+    }, {
+      // **重要：如果涉及跨域并需要 Cookie，请确保设置此项**
+      withCredentials: true 
+    });
+
+    const { access_token, refresh_token } = response.data;
+    
+    // --- 打印检查点 ---
+    console.log('--- 登录响应检查 ---');
+    console.log('响应头 (Headers):', response.headers); 
+    console.log('客户端可访问的 Cookies (document.cookie):', document.cookie);
+    
+    // --- 业务逻辑继续 ---
+    
+    if (access_token && refresh_token) {
+      success.value = true;
+      localStorage.setItem('access_token', access_token);
+      localStorage.setItem('refresh_token', refresh_token);
+      console.log('Token 存储成功。');
+
+    } else {
+      errorMessage.value = '登录成功，但未收到认证令牌。';
     }
+
+  } catch (error) {
+    success.value = false;
+    if (axios.isAxiosError(error)) {
+      errorMessage.value = error.response?.data?.message || '登录失败，请检查用户名和密码。';
+    } else {
+      errorMessage.value = '发生了一个未知错误。';
+    }
+    console.error('Login Error:', error);
+  }
+  finally {
+    // --- 打印检查点 ---
+    console.log("打印cookie",document.cookie);
   }
 };
 </script>

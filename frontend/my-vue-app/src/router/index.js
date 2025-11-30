@@ -36,6 +36,11 @@ const routes = [
     path:'/test',
     name:'test',
     component: () => import('../components/ProtectedTest.vue')
+  },
+  {
+    path:'/test_ws',
+    name:'test_ws',
+    component: () => import('../components/WsStatusTes.vue')
   }
   
 

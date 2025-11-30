@@ -52,7 +52,7 @@ const isLoading = ref(true);
 const fetchError = ref(null);
 // 【新增/修正：搜索关键字的响应式状态】
 const searchTerm = ref(''); 
-const fetchfriendsurl = 'http://127.0.0.1:8000/api/users/user_fetch_friends/';
+const fetchfriendsurl = '/api/users/user_fetch_friends/';
 const serve_base_url = 'http://127.0.0.1:8000';
 
 const fetchfriends = async () => {

@@ -10,6 +10,9 @@ from .serializers import (UserRegistrationSerializer, UserLoginSerializer, fetch
                           user_add_friend,fetch_user_notification,user_handle_request,user_fetch_friends,user_del_friend,
                           BoostedFetchUserAvatarSerializer,UserUploadAvatarSerializer)
 from .models import UserInfo
+from django.conf import settings
+from django.contrib.auth import login
+import datetime
 
 User = get_user_model()
 
@@ -19,24 +22,50 @@ class UserRegistrationView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
 
 class UserLoginView(APIView):
-    """用户登录接口：返回 access 和 refresh 令牌"""
+    """
+    用户登录端点：
+    1. 生成 JWT Token 并返回到响应体。
+    2. 执行 django.contrib.auth.login() 设置 SessionID Cookie (适配 Channels)。
+    """
     serializer_class = UserLoginSerializer
     permission_classes = [permissions.AllowAny]
-
+    
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.serializer_class(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data.pop('user')
-        serializer.validated_data.pop('password')
+        user = serializer.validated_data.get('user')
+        login(request, user) 
         tokens = get_tokens_for_user(user)
-        serializer.validated_data['access_token'] = tokens['access_token']
-        serializer.validated_data['refresh_token'] = tokens['refresh_token']
-        return Response(serializer.validated_data, status=status.HTTP_200_OK)
+        access_token = tokens['access_token']
+        refresh_token = tokens['refresh_token']
+        response_data = {
+            'username': user.username,
+            'user_id': user.id,
+            'message': '登录成功',
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+        }
+        response = Response(response_data, status=status.HTTP_200_OK)
+
+        session_key = request.session.session_key
+        response.set_cookie(
+        key='sessionid',
+        value=session_key,
+        httponly=True,  # 防止 JavaScript 访问
+        secure=False,    # 开发时禁用 HTTPS
+        samesite='Lax',  # 限制跨站点请求时发送
+        path='/',        # 在整个网站有效
+        max_age=60*60*24*7
+        )
+        return response
 
 
 class FetchUserInfoView(APIView):
+    "用户获取自己的信息"
     permission_classes = [IsAuthenticated] 
     def get(self, request):
+        sessionid = request.COOKIES.get('sessionid')
+        print(f"sessionid: {sessionid}")
         try:
             user_info_instance = request.user.user_info 
         except UserInfo.DoesNotExist:

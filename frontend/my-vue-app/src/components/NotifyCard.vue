@@ -39,9 +39,9 @@
 </template>
 
 <script setup>
-import { computed, defineEmits } from 'vue'; 
+import { computed} from 'vue'; 
 import axios from 'axios';
-import defineProps from 'vue';
+
 const emit = defineEmits(['action']);
 const userhandleurl = 'http://127.0.0.1:8000/api/users/user_handle_request/';
 

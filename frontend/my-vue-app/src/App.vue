@@ -6,6 +6,7 @@
       <router-link to="/friendslist">好友</router-link>
       <router-link to="/personalpage">个人</router-link>
       <router-link to="/test">测试</router-link>
+      <router-link to="/test_ws">测试ws</router-link>
     </nav>
 
     <!-- 主要内容区域 - 只显示当前路由对应的组件 -->

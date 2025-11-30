@@ -37,7 +37,7 @@ const notifications = ref([]); // 存储通知列表数组
 const loading = ref(true);
 const error = ref(null);
 
-const getfriendnotifyurl = 'http://127.0.0.1:8000/api/users/fetch_user_notifications/';
+const getfriendnotifyurl = '/api/users/fetch_user_notifications/';
 
 const handleNotificationAction = (payload) => {
     if (payload.success) {
