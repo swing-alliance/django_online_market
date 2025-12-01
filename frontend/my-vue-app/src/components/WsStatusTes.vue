@@ -58,19 +58,13 @@ const WS_URL = '/ws/status/'
 
 const connectWs = () => {
   console.log('尝试连接 WebSocket...')
-  
   try {
-    // 创建 WebSocket 连接时，确保携带 cookie
     ws.value = new WebSocket(WS_URL)
-
-    // 连接成功后的回调
     ws.value.onopen = (event) => {
       console.log('WebSocket 连接已建立', event)
       connectionStatus.value = 'connected'
       addMessage('system', 'WebSocket 连接成功', new Date())
     }
-
-    // 接收到消息后的回调
     ws.value.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data)

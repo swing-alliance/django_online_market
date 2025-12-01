@@ -15,7 +15,7 @@ import axios from 'axios';
 import { setupAxiosInterceptor } from '@/utils/AxiosInterceptor';
 setupAxiosInterceptor();
 const FALLBACK_AVATAR = '/image/fallback.png'; 
-const API_URL = 'http://127.0.0.1:8000/api/users/boosted_fetch_user_avatar/';
+const API_URL = '/api/users/boosted_fetch_user_avatar/';
 const avatarUrl = ref(FALLBACK_AVATAR);
 const handleImageError = (event) => {
   event.target.src = FALLBACK_AVATAR;

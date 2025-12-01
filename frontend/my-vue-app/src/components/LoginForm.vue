@@ -79,7 +79,6 @@ const login = async () => {
     console.error('Login Error:', error);
   }
   finally {
-    // --- 打印检查点 ---
     console.log("打印cookie",document.cookie);
   }
 };
