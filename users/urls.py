@@ -4,11 +4,12 @@ from django.conf import settings
 from django.conf.urls.static import static
 from .views import (UserRegistrationView,UserLoginView,
                     FetchUserInfoView,AddFriendRequestView ,FetchUserNotificationView,UserHandleRequestView,UserFetchFriendView
-                    ,BoostedFetchUserAvatarView,UserUploadAvatarView)
+                    ,BoostedFetchUserAvatarView,UserUploadAvatarView,UserLogoutView)
 
 urlpatterns = [
     path('register/', UserRegistrationView.as_view(), name='register'),
     path('login/', UserLoginView.as_view(), name='login'),
+    path('logout/', UserLogoutView.as_view(), name='logout'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('fetch_user_info/',FetchUserInfoView.as_view(),name='fetch_user_info'),
     path('add_friend_request/',AddFriendRequestView.as_view(),name='add_friend_request'),

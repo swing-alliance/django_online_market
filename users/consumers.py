@@ -49,5 +49,16 @@ class UserStatusConsumer(AsyncWebsocketConsumer):
 
 
     async def receive(self, text_data):
-        print("收到消息:", text_data)
-        pass
+        """先判断在线状态 → 消息持久化到 DB → 若在线则通过 Channel Layer 实时推送 → 若离线则留待 DB 作为队列，下次上线时投递"""
+        try:
+            data = json.loads(text_data)
+        except json.JSONDecodeError:
+            # 如果不是有效的 JSON，打印错误或忽略
+            print(f"Received invalid JSON or plain text: {text_data}")
+            return
+        if data.get('type') == "ping":
+            pong_response = json.dumps({"type": "pong"})
+            await self.send(text_data=pong_response)
+            return
+
+        

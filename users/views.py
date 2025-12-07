@@ -11,7 +11,7 @@ from .serializers import (UserRegistrationSerializer, UserLoginSerializer, fetch
                           BoostedFetchUserAvatarSerializer,UserUploadAvatarSerializer)
 from .models import UserInfo
 from django.conf import settings
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 import datetime
 
 User = get_user_model()
@@ -59,6 +59,14 @@ class UserLoginView(APIView):
         )
         return response
 
+
+class UserLogoutView(APIView):
+    permission_classes = [IsAuthenticated] 
+    def post(self, request):
+        logout(request)
+        response = Response({"message": "Logout successful."}, status=status.HTTP_200_OK)
+        response.delete_cookie('sessionid')
+        return response
 
 class FetchUserInfoView(APIView):
     "用户获取自己的信息"

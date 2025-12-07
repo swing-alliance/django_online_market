@@ -23,6 +23,12 @@
 
 <script setup>
 import router from '@/router'
+import { onMounted } from 'vue';
+import wsService from '@/utils/websoketservice.js';
+onMounted(() => {
+  wsService.connect();
+})
+
 const refresh_token = localStorage.getItem('refresh_token');
 if (!refresh_token) {
     router.push('/login');

@@ -83,6 +83,7 @@ const fileInput = ref(null);
 const defaultAvatar = '/image/default_avatar.png'; // public/image/default_avatar.png
 
 const API_URL = '/api/users/fetch_user_info/';
+const LOGOUT_URL = '/api/users/logout/';
 const AVATAR_UPDATE_URL = '/api/users/user_upload_avatar/';
 
 // ==================== 双击触发 ====================
@@ -147,10 +148,17 @@ const fetchUserInfo = async () => {
 };
 
 // ==================== 退出登录 ====================
-const handleLogout = () => {
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
-  router.push('/login');
+const handleLogout = async() => {
+  try{
+    await axios.post(LOGOUT_URL, {});
+  }catch(err){
+    console.error('退出登录失败:', err);
+  }
+  finally{
+    localStorage.clear();
+     router.push('/login');
+  }
+  
 };
 
 // ==================== 生命周期 ====================

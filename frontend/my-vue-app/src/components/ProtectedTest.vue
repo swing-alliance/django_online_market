@@ -35,7 +35,7 @@ const uploadAvatar = async () => {
   uploadError.value = null
 
   try {
-    const response = await axios.patch('http://127.0.0.1:8000/api/users/user_upload_avatar/', formData, {
+    const response = await axios.patch('/api/users/user_upload_avatar/', formData, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('access_token')}`,  // 如果需要认证，添加 token
         'Content-Type': 'multipart/form-data',  // 设置文件上传的 Content-Type

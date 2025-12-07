@@ -16,7 +16,7 @@
       <button type="submit">登录</button>
       
       <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
-      <p v-if="success" class="success">登录成功</p>
+      <p v-if="success" class="success">登录成功,即将跳转</p>
       
       <router-link to="/register">没有账号?</router-link>
     </form>
@@ -26,6 +26,8 @@
 <script setup>
 import axios from 'axios';
 import { ref } from 'vue';
+import router from '../router';
+
 
 // 如果你的后端需要跨域携带 Cookie，请确保配置了 withCredentials
 // 例如: axios.defaults.withCredentials = true;
@@ -46,28 +48,27 @@ const login = async () => {
       username: form.value.username,
       password: form.value.password,
     }, {
-      // **重要：如果涉及跨域并需要 Cookie，请确保设置此项**
       withCredentials: true 
     });
 
     const { access_token, refresh_token } = response.data;
     
-    // --- 打印检查点 ---
-    console.log('--- 登录响应检查 ---');
-    console.log('响应头 (Headers):', response.headers); 
-    console.log('客户端可访问的 Cookies (document.cookie):', document.cookie);
-    
+
     // --- 业务逻辑继续 ---
     
     if (access_token && refresh_token) {
       success.value = true;
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('refresh_token', refresh_token);
+      localStorage.setItem('username', form.value.username || '');
       console.log('Token 存储成功。');
 
     } else {
       errorMessage.value = '登录成功，但未收到认证令牌。';
     }
+    setTimeout(() => {
+      router.push('/PersonalPage');
+    }, 1000);
 
   } catch (error) {
     success.value = false;

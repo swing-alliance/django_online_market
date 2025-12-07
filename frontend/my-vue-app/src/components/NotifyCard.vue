@@ -43,7 +43,7 @@ import { computed} from 'vue';
 import axios from 'axios';
 
 const emit = defineEmits(['action']);
-const userhandleurl = 'http://127.0.0.1:8000/api/users/user_handle_request/';
+const userhandleurl = '/api/users/user_handle_request/';
 
 const props = defineProps({
     notify_name: {

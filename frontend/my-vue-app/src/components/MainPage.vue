@@ -28,7 +28,7 @@ import { setupAxiosInterceptor } from '@/utils/AxiosInterceptor.js';
 
 setupAxiosInterceptor();
 
-const apiUrl = 'http://127.0.0.1:8000/api/users/add_friend_request/';
+const apiUrl = '/api/users/add_friend_request/';
 
 export default {
   name: 'AddFriendRequest', 

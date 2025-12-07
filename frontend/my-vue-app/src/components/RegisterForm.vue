@@ -21,7 +21,7 @@
       </div>
       <button type="submit">注册</button>
       <p v-if="error" class="error">{{ error }}</p>
-      <p v-if="success" class="success">注册成功！</p>
+      <p v-if="success" class="success">注册成功,即将跳转到登录！</p>
       <router-link to="/login">已有账号?</router-link>
     </form>
   </div>
@@ -29,6 +29,7 @@
 
 <script>
 import axios from 'axios';
+import router from '../router';
 
 export default {
   data() {
@@ -48,7 +49,7 @@ export default {
     async registerUser() {
       this.error = null;
       this.success = false;
-      const API_URL = 'http://127.0.0.1:8000/api/users/register/'; 
+      const API_URL = '/api/users/register/'; 
       
       try {
         const response = await axios.post(API_URL, this.form);
@@ -60,6 +61,9 @@ export default {
             password: '',
             password_confirm: ''
         };
+        setTimeout(() => {
+            router.push('/login');
+        },3000);
       } catch (err) {
         console.error('注册失败:', err.response);
         if (err.response && err.response.data) {

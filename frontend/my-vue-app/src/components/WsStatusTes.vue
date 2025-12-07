@@ -46,7 +46,7 @@
 </template>
 
 <script setup>
-import { ref,  onUnmounted } from 'vue'
+import { ref,  onUnmounted , onMounted} from 'vue'
 
 const ws = ref(null)
 const connectionStatus = ref('disconnected')
@@ -179,7 +179,9 @@ const formatTimestamp = (timestamp) => {
   return new Date(timestamp).toLocaleTimeString()
 }
 
-// 组件卸载时清理
+onMounted(() => {connectWs()})
+  
+
 onUnmounted(() => {
   disconnectWs()
 })
@@ -277,7 +279,7 @@ button:hover:not(:disabled) {
 
 .user-status {
   padding: 15px;
-  background: #e7f3ff;
+  background: #071422;
   border-radius: 4px;
   border-left: 4px solid #007bff;
 }
