@@ -66,8 +66,8 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { setupAxiosInterceptor } from '@/utils/AxiosInterceptor.js';
+import emitter from '@/utils/eventBus.js';
 
-// 初始化拦截器（你已在其中统一处理 headers、token）
 setupAxiosInterceptor();
 
 const router = useRouter();
@@ -155,6 +155,7 @@ const handleLogout = async() => {
     console.error('退出登录失败:', err);
   }
   finally{
+    emitter.emit('logout-requested');
     localStorage.clear();
      router.push('/login');
   }

@@ -11,6 +11,7 @@
     "axios": "latest",
     "core-js": "latest",
     "eslint-plugin-vue": "latest",
+    "mitt": "^3.0.1",
     "socket.io-client": "latest",
     "vue": "latest",
     "vue-router": "latest"

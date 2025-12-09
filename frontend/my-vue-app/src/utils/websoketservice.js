@@ -1,3 +1,4 @@
+import emitter from "./eventBus";
 const WS_URL = 'ws/status/';
 let wsInstance = null;
 let reconnectTimer = null;
@@ -59,6 +60,10 @@ function connect() {
                 console.log('Pong');
                 return; 
             }
+            if (data.type === 'pending_requests') {
+                emitter.emit('pending-update', data.count);
+                return; 
+            }
             console.log('收到业务消息:', data);
         } catch (e) {
             console.error('消息解析错误:', e);
@@ -93,6 +98,12 @@ function reconnect(){
     }
 }
 
+function disconnect() {
+    if (wsInstance) {
+        wsInstance.close();
+    }
+}
+
 // 封装发送方法
 function send(data) {
     if (wsInstance && wsInstance.readyState === 1) {
@@ -106,6 +117,7 @@ function send(data) {
 export default {
     connect,
     send,
+    disconnect,
     get readyState() {
         return wsInstance ? wsInstance.readyState : WebSocket.CLOSED;
     }

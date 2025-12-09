@@ -27,7 +27,7 @@
 import axios from 'axios';
 import { ref } from 'vue';
 import router from '../router';
-
+import emitter from '@/utils/eventBus';
 
 // 如果你的后端需要跨域携带 Cookie，请确保配置了 withCredentials
 // 例如: axios.defaults.withCredentials = true;
@@ -80,7 +80,7 @@ const login = async () => {
     console.error('Login Error:', error);
   }
   finally {
-    console.log("打印cookie",document.cookie);
+    emitter.emit('login-requested');
   }
 };
 </script>

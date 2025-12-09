@@ -1,5 +1,7 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
+from asgiref.sync import sync_to_async
+
 import redis 
 import json
 
@@ -22,6 +24,8 @@ class UserStatusConsumer(AsyncWebsocketConsumer):
         await self.accept()
         await self.set_user_online_status()
         await self.channel_layer.group_add(self.group_name,self.channel_name)
+        pending_count = await self.get_pending_requests()
+        await self.send(text_data=json.dumps({"type": "pending_requests", "count": pending_count}))
         print(f"用户 {self.user_id} 已上线，状态已更新到 Redis。")
 
 
@@ -35,17 +39,29 @@ class UserStatusConsumer(AsyncWebsocketConsumer):
 
 
 
-    @database_sync_to_async
+    @sync_to_async
     def set_user_online_status(self):
         """设置用户在线状态，并设置 TTL"""
         key = f"{ONLINE_STATUS_KEY_PREFIX}{self.user_id}"
         r.set(key, json.dumps({"status": "online"}), ex=STATUS_TTL)
 
-    @database_sync_to_async
+    @sync_to_async
     def remove_user_online_status(self):
         """删除用户在线状态"""
         key = f"{ONLINE_STATUS_KEY_PREFIX}{self.user_id}"
         r.delete(key)
+
+    @database_sync_to_async
+    def get_pending_requests(self):
+        from .models import FriendRequest
+        user_id = self.user.id
+        try:
+            count = FriendRequest.objects.filter(to_user=user_id,status=1).count()
+            return count
+        except Exception as e:
+            print(f"查询好友请求失败: {e}")
+            return 0
+
 
 
     async def receive(self, text_data):
@@ -61,4 +77,4 @@ class UserStatusConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=pong_response)
             return
 
-        
+
