@@ -29,7 +29,9 @@
 
         <div v-else class="friend-cards-wrapper" style="margin-top: 20px; display: flex; margin-left: 60px; flex-direction: column; gap: 10px;">
             <FriendsListCard
-                v-for="friend in filteredFriendList" :key="friend.id"
+                v-for="friend in filteredFriendList"
+                :key="friend.id"
+                :friendId="friend.id"
                 :avatarUrl="friend.avatarUrl"
                 :friendAccountName="friend.name"
                 :friendAccountId="friend.accountId"
@@ -43,6 +45,7 @@ import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import { setupAxiosInterceptor } from '@/utils/AxiosInterceptor.js';
 import FriendsListCard from './FriendsListCard.vue'; 
+
 setupAxiosInterceptor();
 const FriendIdArray = ref([]);
 const FriendAccountNameArray = ref([]);

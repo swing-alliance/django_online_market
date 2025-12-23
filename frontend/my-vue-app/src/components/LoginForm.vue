@@ -51,7 +51,7 @@ const login = async () => {
       withCredentials: true 
     });
 
-    const { access_token, refresh_token } = response.data;
+    const { access_token, refresh_token,user_id } = response.data;
     
 
     // --- 业务逻辑继续 ---
@@ -61,7 +61,8 @@ const login = async () => {
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('refresh_token', refresh_token);
       localStorage.setItem('username', form.value.username || '');
-      console.log('Token 存储成功。');
+      localStorage.setItem('user_id', user_id || '');
+      // 登录成功后，更新用户状态
 
     } else {
       errorMessage.value = '登录成功，但未收到认证令牌。';

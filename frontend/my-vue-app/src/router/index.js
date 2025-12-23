@@ -41,6 +41,11 @@ const routes = [
     path:'/test_ws',
     name:'test_ws',
     component: () => import('../components/WsStatusTes.vue')
+  },
+  {
+    path:'/chatroom/:mydatabaseId/:friendAccountName',
+    name:'chatroom',
+    component: () => import('../components/UsersChatRoom.vue')
   }
   
 

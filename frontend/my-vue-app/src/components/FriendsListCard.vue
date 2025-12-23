@@ -17,35 +17,51 @@
       </p>
     </div>
     
-    <button class="message-btn">发消息</button>
+    <button class="message-btn" @click="HandleSendMessage">发消息</button>
   </div>
 </template>
 
 <script setup>
 // 修正：使用命名导出 {} 来导入 ref
 import { ref } from 'vue';
-
+import router from '@/router';
 const props = defineProps({
     avatarUrl: {
         type: String,
         default: '',
     },
+    friendId: {
+        type: [String, Number],
+        required: true,
+
+    },
     friendAccountName: {
         type: String,
-        required: true, // 假设昵称是必需的
+        required: true, 
     },
     friendAccountId: {
         type: [String, Number],
         default: null,
     },
 });
-
-// 使用 ref 创建一个响应式变量
 const defaultAvatarUrl = ref('/image/default_avatar.png');
+
+
+function HandleSendMessage()
+{
+  router.push({
+    name: 'chatroom',
+    params: {
+      mydatabaseId: localStorage.getItem('user_id'),
+      friendAccountName: props.friendAccountName,
+    }
+  });
+}
 </script>
 
+
+
 <style scoped>
-/* 组件样式 */
 .friend-card {
   display: flex;
   align-items: center;
