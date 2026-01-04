@@ -121,5 +121,6 @@ export default {
     get readyState() {
         return wsInstance ? wsInstance.readyState : WebSocket.CLOSED;
     }
+    
 };
 connect();

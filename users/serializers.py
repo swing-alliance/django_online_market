@@ -242,6 +242,7 @@ class user_fetch_friends(serializers.Serializer):
     avatar_url = serializers.SerializerMethodField(read_only=True)
     @cached_property
     def get_relationship_instances(self):
+        """获取好友关系实例"""
         user = self.context['request'].user
         instances = UserFriendRelationship.objects.filter(user=user, relationship='好友').select_related('friend', 'friend__user_info')
         return instances

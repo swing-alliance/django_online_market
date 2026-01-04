@@ -43,7 +43,7 @@ const routes = [
     component: () => import('../components/WsStatusTes.vue')
   },
   {
-    path:'/chatroom/:mydatabaseId/:friendAccountName',
+    path:'/chatroom/:myId/:friendId',
     name:'chatroom',
     component: () => import('../components/UsersChatRoom.vue')
   }
@@ -57,4 +57,5 @@ const router = createRouter({
   routes
 })
 
-export default router
+export default router;
+export const serve_base_url = 'http://127.0.0.1:8000';

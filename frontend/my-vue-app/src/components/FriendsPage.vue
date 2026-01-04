@@ -45,7 +45,7 @@ import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import { setupAxiosInterceptor } from '@/utils/AxiosInterceptor.js';
 import FriendsListCard from './FriendsListCard.vue'; 
-
+import { serve_base_url } from '@/router';
 setupAxiosInterceptor();
 const FriendIdArray = ref([]);
 const FriendAccountNameArray = ref([]);
@@ -55,7 +55,7 @@ const isLoading = ref(true);
 const fetchError = ref(null);
 const searchTerm = ref(''); 
 const fetchfriendsurl = '/api/users/user_fetch_friends/';
-const serve_base_url = 'http://127.0.0.1:8000';//生产环境请改为实际地址
+
 
 const fetchfriends = async () => {
     isLoading.value = true;
@@ -93,6 +93,11 @@ const allFriendList = computed(() => {
             accountId: FriendAccountIdArray.value[i],
             avatarUrl: avatarPath,
         });
+    const avatarMap = {};
+    combinedArray.forEach(item => {
+        avatarMap[item.id] = item.avatarUrl;
+    });
+    localStorage.setItem('friendAvatarMap', JSON.stringify(avatarMap));
     }
     return combinedArray;
 });

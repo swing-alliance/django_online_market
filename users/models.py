@@ -72,18 +72,53 @@ class FriendRequest(models.Model):
 
 
 class GenericMessage(models.Model):
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages',verbose_name="发送方")
-    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages',verbose_name="接收方",db_index=True)
-    content_type = models.CharField(max_length=50, verbose_name="内容类型",default="text")
-    content = models.TextField(verbose_name="消息内容",null=False,blank=False)
+    # 核心优化：thread_id = f"{min_id}_{max_id}"，用于聚合两个人的双向对话
+    thread_id = models.CharField(max_length=64, default="system",db_index=True, verbose_name="会话ID",help_text="格式: 小用户ID_大用户ID")
+    sender = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='sent_messages',
+        verbose_name="发送方"
+    )
+    
+    receiver = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='received_messages',
+        verbose_name="接收方"
+    )
+    
+    content_type = models.CharField(
+        max_length=20, 
+        default="text", 
+        verbose_name="内容类型"
+    )
+    
+    content = models.TextField(verbose_name="消息内容")
     is_read = models.BooleanField(default=False, verbose_name="是否已读")
     is_valid = models.BooleanField(default=True, verbose_name="是否有效")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
-    extensions = models.JSONField(default=dict, verbose_name="扩展数据")
-
+    created_at = models.DateTimeField(db_index=True, verbose_name="创建时间")
+    extensions = models.JSONField(default=dict, blank=True, verbose_name="扩展数据")
     class Meta:
         verbose_name = "消息"
         verbose_name_plural = "消息"
-        ordering = ['created_at'] 
-        indexes = [models.Index(fields=['sender', 'receiver','created_at'], name='sender_receiver_thread_idx'),]
+        indexes = [
+            models.Index(fields=['thread_id', '-created_at'], name='idx_thread_time'),
+            
+            # 2. 场景：查询发送给“我”的所有未读消息
+            # 覆盖索引：先找接收人，再找未读状态
+            models.Index(fields=['receiver', 'is_read', '-created_at'], name='idx_receiver_unread'),
+            
+            # 3. 场景：根据发送者查询（用于撤回消息或个人消息审计）
+            models.Index(fields=['sender', '-created_at'], name='idx_sender_time'),
+        ]
+
+    def __str__(self):
+        return f"{self.sender_id} -> {self.receiver_id}: {self.content[:20]}"
+
+    @staticmethod
+    def get_thread_id(id1, id2):
+        """工具方法：生成一致的会话ID"""
+        ids = sorted([int(id1), int(id2)])
+        return f"{ids[0]}_{ids[1]}"
     

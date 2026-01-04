@@ -52,8 +52,8 @@ function HandleSendMessage()
   router.push({
     name: 'chatroom',
     params: {
-      mydatabaseId: localStorage.getItem('user_id'),
-      friendAccountName: props.friendAccountName,
+      myId: localStorage.getItem('user_id'),
+      friendId: props.friendId,
     }
   });
 }
