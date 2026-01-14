@@ -8,7 +8,7 @@ from django.db import transaction
 from django.contrib.auth import get_user_model
 from .serializers import (UserRegistrationSerializer, UserLoginSerializer, fetch_user_info,
                           user_add_friend,fetch_user_notification,user_handle_request,user_fetch_friends,user_del_friend,
-                          BoostedFetchUserAvatarSerializer,UserUploadAvatarSerializer)
+                          BoostedFetchUserAvatarSerializer,UserUploadAvatarSerializer,GetAvatarByIdSerializer)
 from .models import UserInfo
 from django.conf import settings
 from django.contrib.auth import login, logout
@@ -185,7 +185,17 @@ class UserUploadAvatarView(generics.UpdateAPIView):
     
 
 
-
+class GetAvatarByIdView(APIView):
+    permission_classes = [permissions.AllowAny] 
+    def get(self, request):
+        print("调用我")
+        account_id=request.query_params.get('account_id')
+        try:
+            user_info = UserInfo.objects.get(profile=account_id)
+        except UserInfo.DoesNotExist:
+            return Response({"detail": "User info not found."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = GetAvatarByIdSerializer(user_info)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 

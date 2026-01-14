@@ -45,7 +45,8 @@ import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import { setupAxiosInterceptor } from '@/utils/AxiosInterceptor.js';
 import FriendsListCard from './FriendsListCard.vue'; 
-import { serve_base_url } from '@/router';
+import  {server_base_url}  from '@/router';
+
 setupAxiosInterceptor();
 const FriendIdArray = ref([]);
 const FriendAccountNameArray = ref([]);
@@ -56,6 +57,15 @@ const fetchError = ref(null);
 const searchTerm = ref(''); 
 const fetchfriendsurl = '/api/users/user_fetch_friends/';
 
+const mapData = localStorage.getItem('friendAvatarMap');
+
+// 解析并打印
+if (mapData) {
+    const friendAvatarMap = JSON.parse(mapData);
+    console.log("好友头像映射表：", friendAvatarMap);
+} else {
+    console.log("localStorage 中没有找到 friendAvatarMap");
+}
 
 const fetchfriends = async () => {
     isLoading.value = true;
@@ -75,6 +85,11 @@ const fetchfriends = async () => {
     }
 }
 
+
+
+
+
+
 const allFriendList = computed(() => { 
     const ids = FriendIdArray.value;
     if (ids.length === 0) {
@@ -85,7 +100,7 @@ const allFriendList = computed(() => {
     for (let i = 0; i < length; i++) {
         let avatarPath = FriendAvatarUrlArray.value[i];
         if (avatarPath && avatarPath.startsWith('/')) {
-            avatarPath = serve_base_url + avatarPath;
+            avatarPath = server_base_url + avatarPath;
         }       
         combinedArray.push({
             id: ids[i],
@@ -97,7 +112,7 @@ const allFriendList = computed(() => {
     combinedArray.forEach(item => {
         avatarMap[item.id] = item.avatarUrl;
     });
-    localStorage.setItem('friendAvatarMap', JSON.stringify(avatarMap));
+    localStorage.setItem('friendAvatarMap', JSON.stringify(avatarMap));//朋友id和头像的映射
     }
     return combinedArray;
 });

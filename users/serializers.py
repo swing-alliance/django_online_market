@@ -339,7 +339,13 @@ class BoostedFetchUserAvatarSerializer(serializers.ModelSerializer):
         return f"{avatar_file.url}?v={mtime}"
 
 
-
+class GetAvatarByIdSerializer(serializers.Serializer):
+    avatar_url = serializers.SerializerMethodField(read_only=True)
+    def get_avatar_url(self, obj):
+        avatar_file = obj.account_avatar
+        if not avatar_file or not hasattr(avatar_file, 'url'):
+            return f'{settings.BASE_DOMAIN}{DEFAULT_AVATAR_PATH}'
+        return avatar_file.url
 
 
 
