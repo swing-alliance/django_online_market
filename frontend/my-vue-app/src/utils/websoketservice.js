@@ -1,9 +1,9 @@
 import emitter from "./eventBus";
-const WS_URL = 'ws/status/';
+const WS_URL = `ws://${window.location.host}/ws/status/`;
 let wsInstance = null;
 let reconnectTimer = null;
 let RECONNECT_DELAY = 5000; // 重连间隔 5 秒,逐渐增加,最大30秒
-const HEARTBEAT_INTERVAL = 30000; // 30 秒发送一次心跳 (Ping)
+const HEARTBEAT_INTERVAL = 40000; // 30 秒发送一次心跳 (Ping)
 const HEARTBEAT_TIMEOUT = 10000;  // 10 秒内未收到任何消息，则认为断开
 
 let heartbeatTimer = null;
@@ -54,6 +54,7 @@ function connect() {
 
     wsInstance.onmessage = (event) => {
         resetHeartbeat(); 
+        "关键的消息处理逻辑"
         try {
             const data = JSON.parse(event.data);
             if (data.type === 'pong') {
@@ -113,10 +114,15 @@ function send(data) {
     }
 }
 
+function receive(data) {
+    console.log('接收到消息:', data);
+}
+
 // 导出公共接口
 export default {
     connect,
     send,
+    receive,
     disconnect,
     get readyState() {
         return wsInstance ? wsInstance.readyState : WebSocket.CLOSED;

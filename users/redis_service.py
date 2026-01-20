@@ -15,16 +15,34 @@ redis_client = aioredis.from_url(REDIS_URL, decode_responses=True)
 class RedisService:
     @staticmethod
     async def set_online(user_id):
+        """设置用户在线状态，带过期时间"""
         key = f"{ONLINE_STATUS_KEY_PREFIX}{user_id}"
         await redis_client.set(key, "online", ex=STATUS_TTL)
 
     @staticmethod
     async def set_offline(user_id):
+        """删除用户在线状态"""
         key = f"{ONLINE_STATUS_KEY_PREFIX}{user_id}"
         await redis_client.delete(key)
 
     @staticmethod
-    async def enqueue_message(sender_id, receiver_id, content):
+    async def refresh_online_status(user_id):
+        # 假设你的在线状态 Key 格式是 user:online:{user_id}
+        key = f"{ONLINE_STATUS_KEY_PREFIX}{user_id}"
+        # 重新设置过期时间，比如 300 秒（5分钟）
+        # expire 方法只更新时间，不会改动数据内容
+        await redis_client.expire(key, 300)
+
+
+    @staticmethod
+    async def is_online(user_id):
+        """检查用户是否在线"""
+        key = f"{ONLINE_STATUS_KEY_PREFIX}{user_id}"
+        status = await redis_client.get(key)
+        return status == "online"
+
+    @staticmethod
+    async def enqueue_send_message(sender_id, receiver_id, content):
         """核心：消息入内存队列，不准碰硬盘"""
         payload = {
             "sender_id": str(sender_id),
@@ -43,6 +61,8 @@ class RedisService:
         可以在 Django 启动时异步挂载，或者单独运行
         """
         from .models import GenericMessage # 局部导入，避开启动报错
+        from django.utils import timezone
+        now = timezone.now()
         while True:
             try:
                 # 批量读取 100 条，阻塞 1 秒
@@ -52,21 +72,25 @@ class RedisService:
                     to_save = []
                     msg_ids = []
                     for m_id, content in msgs:
-                        if content['sender_id'] >= content['receiver_id']:
-                            thread_id = GenericMessage.get_thread_id(content['receiver_id'], content['sender_id'])
-                        to_save.append(GenericMessage(
-                            thread_id=thread_id,
-                            sender_id=content['sender_id'],
-                            receiver_id=content['receiver_id'],
-                            content=content['content']
-                        ))
+                        # 清洗数据：如果是字符串 "None"，转为真正的 None 对象
+                        s_id = None if content['sender_id'] == 'None' else content['sender_id']
+                        r_id = None if content['receiver_id'] == 'None' else content['receiver_id']
+
+                        if s_id and r_id:
+                            thread_id = GenericMessage.get_thread_id(r_id, s_id)
+                            to_save.append(GenericMessage(
+                                thread_id=thread_id,
+                                sender_id=s_id,
+                                receiver_id=r_id,
+                                created_at=now,
+                                content=content['content']
+                            ))
                         msg_ids.append(m_id)
                     
                     # 批量写入数据库 (Bulk Create)
                     if to_save:
                         await sync_to_async(GenericMessage.objects.bulk_create)(to_save)
-                        # 处理完后删除内存中的消息
                         await redis_client.xdel("msg_write_queue", *msg_ids)
             except Exception as e:
-                print(f"Worker Error: {e}")
+                print(f"持久化协程错误: {e}")
                 await asyncio.sleep(5)

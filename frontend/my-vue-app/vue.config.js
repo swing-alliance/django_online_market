@@ -3,6 +3,9 @@ const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   transpileDependencies: true,
   devServer: {
+    client: {
+      webSocketURL: 'ws://0.0.0.0:8080/ws', // 确保热更新指向正确的地址
+    },
     port: 8080,
     host: '0.0.0.0',
     proxy: {

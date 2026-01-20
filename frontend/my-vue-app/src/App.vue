@@ -2,29 +2,21 @@
   <div id="app">
     <nav class="global-nav">
       <router-link to="/">首页</router-link>
-      
-      <!-- 这里加上红点 -->
       <router-link to="/notification" class="notification-link">
         通知
         <span v-if="pendingCount > 0" class="notification-badge">{{ pendingCount }}</span>
       </router-link>
-      
       <router-link to="/friendslist">好友</router-link>
       <router-link to="/personalpage">个人</router-link>
       <router-link to="/test">测试</router-link>
       <router-link to="/test_ws">测试ws</router-link>
     </nav>
 
-    <!-- 主要内容区域 - 只显示当前路由对应的组件 -->
     <main class="main-content">
       <router-view />
     </main>
 
-    <!-- 全局页脚 -->
-    <footer class="global-footer">
-      <p>&copy; 2025 我的应用</p>
-    </footer>
-  </div>
+    </div>
 </template>
 
 <script setup>
@@ -77,9 +69,18 @@ if (!refresh_token) {
 </script>
 
 <style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden; /* 关键：禁止浏览器级别的滚动条 */
+}
+
+
 #app {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  min-height: 100vh;
+  /* 删掉或者改为 auto */
+  min-height: auto; 
   display: flex;
   flex-direction: column;
 }
@@ -116,16 +117,20 @@ if (!refresh_token) {
 }
 
 .main-content {
-  flex: 1;
+  flex: none; 
+  /* 改固定高度为自动高度 */
+  height: auto; 
+  width: 100%;
+  
+  /* 既然不要上下拉，确保没有多余的外边距 */
+  margin: 0;
+  padding: 0;
+  
+  /* 保持 overflow: hidden 以防止内部意外溢出 */
+  overflow: hidden; 
 }
 
-.global-footer {
-  background: #f9f9fa;
-  padding: 1rem;
-  text-align: center;
-  border-top: 1px solid #dee2e6;
-  color: rgb(18, 12, 12); /* 增加页脚文本颜色 */
-}
+
 /* 通知红点样式 */
 .notification-link {
   position: relative;

@@ -4,7 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from .views import (UserRegistrationView,UserLoginView,
                     FetchUserInfoView,AddFriendRequestView ,FetchUserNotificationView,UserHandleRequestView,UserFetchFriendView
-                    ,BoostedFetchUserAvatarView,UserUploadAvatarView,UserLogoutView,GetAvatarByIdView)
+                    ,BoostedFetchUserAvatarView,UserUploadAvatarView,UserLogoutView,GetAvatarByIdView,FetchChatHistoryView)
 
 urlpatterns = [
     path('register/', UserRegistrationView.as_view(), name='register'),
@@ -19,5 +19,6 @@ urlpatterns = [
     path('boosted_fetch_user_avatar/',BoostedFetchUserAvatarView.as_view(),name='boosted_fetch_user_avatar'),
     path('user_upload_avatar/',UserUploadAvatarView.as_view(),name='user_upload_avatar'),
     path('get_avatar_by_id/',GetAvatarByIdView.as_view(),name='get_avatar_by_id'),
+    path("get_chat_history/",FetchChatHistoryView.as_view(),name="get_chat_history"),
 ]
 

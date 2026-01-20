@@ -73,7 +73,6 @@ class FetchUserInfoView(APIView):
     permission_classes = [IsAuthenticated] 
     def get(self, request):
         sessionid = request.COOKIES.get('sessionid')
-        print(f"sessionid: {sessionid}")
         try:
             user_info_instance = request.user.user_info 
         except UserInfo.DoesNotExist:
@@ -188,7 +187,6 @@ class UserUploadAvatarView(generics.UpdateAPIView):
 class GetAvatarByIdView(APIView):
     permission_classes = [permissions.AllowAny] 
     def get(self, request):
-        print("调用我")
         account_id=request.query_params.get('account_id')
         try:
             user_info = UserInfo.objects.get(profile=account_id)
@@ -198,7 +196,30 @@ class GetAvatarByIdView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-
+class FetchChatHistoryView(APIView):
+    "用户获取与某好友的聊天记录"
+    permission_classes = [IsAuthenticated] 
+    def get(self, request):
+        from .models import GenericMessage
+        friend_id=request.query_params.get('friend_id')
+        user_id=request.user.id
+        search_id=GenericMessage.get_thread_id(user_id,friend_id)
+        chat_history = GenericMessage.objects.filter(thread_id=search_id).order_by('created_at')
+        history_data = []
+        for msg in chat_history:
+            if msg.sender_id == user_id:
+                # 我发的消息
+                history_data.append({
+                    "myword": msg.content,
+                    "timestamp": msg.created_at.timestamp()
+                })
+            else:
+                # 好友发的消息
+                history_data.append({
+                    "friendword": msg.content,
+                    "timestamp": msg.created_at.timestamp()
+                })
+        return Response(history_data, status=200)
 
 
 

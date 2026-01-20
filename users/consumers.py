@@ -2,9 +2,20 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from .redis_service import RedisService # 只导入 Service
+import asyncio
+_db_worker_task = None
 
 class UserStatusConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        print("有链接进来了")
+        global _db_worker_task
+        
+        # 核心逻辑：确保全局只有一个任务在运行
+        if _db_worker_task is None or _db_worker_task.done():
+            # 获取当前正在运行的事件循环
+            loop = asyncio.get_running_loop()
+            # 挂载到全局，这样它就不会随着当前 consumer 实例的销毁而停止
+            _db_worker_task = loop.create_task(RedisService.start_db_worker())
         self.user = self.scope.get("user")
         if not self.user or not self.user.is_authenticated:
             await self.close()
@@ -23,30 +34,42 @@ class UserStatusConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
     async def receive(self, text_data):
+        """处理来自 WebSocket 的消息"""
         try:
             data = json.loads(text_data)
+            datatype = data.get('type')
         except: return
-
-        if data.get('type') == "sendmessage":
+        if datatype == "ping":
+            """心跳响应"""
+            await self.send(text_data=json.dumps({"type": "pong"}))
+            await RedisService.refresh_online_status(self.user_id)
+        if datatype == "sendmessage":
             # 3. 极速响应：写入 Redis 队列
-            msg_payload = await RedisService.enqueue_message(
-                sender_id=self.user_id,
-                receiver_id=data.get('friend_id'), # 建议前端直接传 ID
-                content=data.get('content')
-            )
-            
-            # 4. 实时广播：通过内存转发给接收者
-            await self.channel_layer.group_send(
-                f"user_{data.get('friend_id')}",
-                {
-                    "type": "chat.message",
-                    "data": msg_payload
+            msg_payload ={
+                "type": "receivemessage",
+                "data": {
+                    "sender_id": data.get("sender_id"),
+                    "receiver_id": data.get("receiver_id"), # 建议前端直接传 ID
+                    "content": data.get("content"),
+                    "timestamp": str(data.get("timestamp"))
                 }
-            )
+            }
+            asyncio.create_task(RedisService.enqueue_send_message(
+                sender_id=data.get("sender_id"),
+                receiver_id=data.get('receiver_id'), # 建议前端直接传 ID
+                content=data.get('content')
+            ))
+            if await RedisService.is_online(data.get('friend_id')):
+                """如果好友在线，就直接发给好友"""
+                await self.channel_layer.group_send(
+                    f"user_{data.get('friend_id')}",
+                    {
+                        "type": "receivemessage",
+                        "data": msg_payload
+                    }
+                )
 
-    async def chat_message(self, event):
-        """接收并下发来自 group_send 的消息"""
-        await self.send(text_data=json.dumps(event))
+
 
     @database_sync_to_async
     def get_pending_requests(self):

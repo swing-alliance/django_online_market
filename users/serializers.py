@@ -152,7 +152,6 @@ class user_add_friend(serializers.Serializer):
                     elif every_request.status==2:
                         raise serializers.ValidationError("已经是好友关系。")
                     elif every_request.status==3:
-                        print('执行到这')
                         timenow=timezone.now()
                         punish_days = timedelta(days=0)
                         allowday=every_request.rejected_at+punish_days
