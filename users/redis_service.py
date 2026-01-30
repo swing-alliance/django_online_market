@@ -27,6 +27,7 @@ class RedisService:
 
     @staticmethod
     async def refresh_online_status(user_id):
+        """刷新用户在线状态的过期时间"""
         # 假设你的在线状态 Key 格式是 user:online:{user_id}
         key = f"{ONLINE_STATUS_KEY_PREFIX}{user_id}"
         # 重新设置过期时间，比如 300 秒（5分钟）
@@ -39,7 +40,9 @@ class RedisService:
         """检查用户是否在线"""
         key = f"{ONLINE_STATUS_KEY_PREFIX}{user_id}"
         status = await redis_client.get(key)
-        return status == "online"
+        if status == "online":
+            return True
+        return False
 
     @staticmethod
     async def enqueue_send_message(sender_id, receiver_id, content):

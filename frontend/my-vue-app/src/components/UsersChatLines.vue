@@ -1,6 +1,6 @@
 <template>
   <div class="chat-container" ref="chatBox">
-    <div v-for="(msg, index) in messageQueue" :key="index" 
+    <div v-for="(msg, index) in props.messageQueue" :key="index" 
          :class="['message-row', msg.type === 'mine' ? 'row-right' : 'row-left']">
       
       <img :src="msg.type === 'mine' ? props.myAvatarUrl : props.friendAvatar" class="avatar" />
@@ -29,7 +29,6 @@ const props = defineProps({
 });
 
 const chatBox = ref(null);
-
 /**
  * 自动滚动逻辑
  * 监听内容更新后，将滚动条拉到底部
@@ -47,10 +46,18 @@ onUpdated(() => {
 });
 
 const formatTime = (ts) => {
+  // 格式化时间
   if (!ts) return '';
-  // 处理秒级和毫秒级时间戳
-  const date = new Date(isNaN(ts) ? ts : ts * 1000);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const numericTs = parseFloat(ts);
+  const date = new Date(numericTs < 10000000000 ? numericTs * 1000 : numericTs);
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false // 使用24小时制，如果想用AM/PM就改为true
+  });
 };
 </script>
 <style scoped>

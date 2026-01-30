@@ -58,4 +58,4 @@ const router = createRouter({
 })
 
 export default router;
-export const server_base_url = 'http://127.0.0.1:8000';
+export const server_base_url = 'http://127.0.0.1:8000';//192.168.1.6:8000

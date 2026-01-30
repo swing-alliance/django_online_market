@@ -27,7 +27,11 @@ import { useRoute } from 'vue-router';
 import axios from 'axios';
 import wsService from '@/utils/websoketservice.js';
 import UsersChatLines from './UsersChatLines.vue'; // 导入刚才写的组件
-
+import {setupAxiosInterceptor} from '@/utils/AxiosInterceptor.js';
+import { useMessageStore } from '@/stores/WsStore.js';
+import { watch } from 'vue';
+const messageStore = useMessageStore();
+setupAxiosInterceptor();
 const route = useRoute();
 const messagebox = ref('');
 const messageQueue = ref([]); // 核心：对话队列
@@ -38,10 +42,8 @@ const messageQueue = ref([]); // 核心：对话队列
 // 1. 发送逻辑
 const handleSend = () => {
     if (!messagebox.value.trim()) return;
-
     const nowTimestamp = (Date.now() / 1000).toString();
     const tempId = 'local_' + Date.now();
-
     const msgPayload = {
         tempId: tempId,
         sender_id: myId.value,
@@ -50,7 +52,6 @@ const handleSend = () => {
         content: messagebox.value,
         timestamp: nowTimestamp
     };
-
     // ✅ 调用有序插入
     insertMessage({
         id: tempId,
@@ -59,7 +60,6 @@ const handleSend = () => {
         type: 'mine',
         status: 'sending'
     });
-
     wsService.send(msgPayload);
     messagebox.value = '';
 };
@@ -67,19 +67,35 @@ const handleSend = () => {
 // 2. 接收逻辑：你需要给 wsService 增加一个回调或者使用事件监听
 // 这里假设你在 wsService.receive 里处理逻辑，或者通过 mitt 等发布订阅机制
 // 简单起见，如果你在 wsService 里定义了 receive 回调：
-/*
-const onMessageReceived = (data) => {
-    const remoteData = data.data; // 后端 payload
+
+watch(
+  // 1. 明确监听数组的长度
+  () => messageStore.receivedQueue.length, 
+  (newLength) => {
+    // 2. 只要长度大于 0，说明有新消息进来
+    if (newLength > 0) {
+      // 3. 循环处理队列中的所有消息（防止瞬间涌入多条）
+      while (messageStore.receivedQueue.length > 0) {
+        // 4. 从 Pinia 队列中“取出”第一条消息（同时会从原数组删除）
+        const latestMsg = messageStore.receivedQueue.shift(); 
+        console.log('⚡ 正在处理并移除 Pinia 缓存:', latestMsg);
+        parsereceivedmessage(latestMsg);
+      }
+    }
+  }
+);
     
+
+const parsereceivedmessage = (remoteData) => { 
     // ✅ 调用有序插入
     insertMessage({
-        id: remoteData.id,
+        id: `hist_${remoteData.timestamp}_${Math.random()}`,
         words: remoteData.content,
         timestamp: remoteData.timestamp,
         type: 'friend'
     });
 };
-*/
+
 
 const insertMessage = (newMessage) => {
     // 1. 查找插入位置 (使用二进制搜索或简单的 findIndex)
@@ -94,7 +110,6 @@ const insertMessage = (newMessage) => {
         // 插入到比它晚的消息之前
         messageQueue.value.splice(index, 0, newMessage);
     }
-    
     // 2. 去重逻辑（防止历史记录拉取和实时推送重复）
     // 如果你有唯一 ID，可以在这里过滤掉重复 ID
 };

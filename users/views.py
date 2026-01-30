@@ -2,9 +2,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from adrf.views import APIView as AdrfAPIView
 from django.http import Http404
 from rest_framework.permissions import IsAuthenticated
-from django.db import transaction
+from asgiref.sync import sync_to_async
+from .redis_service import redis_client
+from django.utils import timezone
 from django.contrib.auth import get_user_model
 from .serializers import (UserRegistrationSerializer, UserLoginSerializer, fetch_user_info,
                           user_add_friend,fetch_user_notification,user_handle_request,user_fetch_friends,user_del_friend,
@@ -196,35 +199,89 @@ class GetAvatarByIdView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class FetchChatHistoryView(APIView):
-    "用户获取与某好友的聊天记录"
-    permission_classes = [IsAuthenticated] 
-    def get(self, request):
+# class FetchChatHistoryView(APIView):
+#     "用户获取与某好友的聊天记录"
+#     permission_classes = [IsAuthenticated] 
+#     def get(self, request):
+#         from .models import GenericMessage
+#         friend_id=request.query_params.get('friend_id')
+#         user_id=request.user.id
+#         search_id=GenericMessage.get_thread_id(user_id,friend_id)
+#         chat_history = GenericMessage.objects.filter(thread_id=search_id).order_by('created_at')
+#         history_data = []
+#         for msg in chat_history:
+#             if msg.sender_id == user_id:
+#                 # 我发的消息
+#                 history_data.append({
+#                     "myword": msg.content,
+#                     "timestamp": msg.created_at.timestamp()
+#                 })
+#             else:
+#                 # 好友发的消息
+#                 history_data.append({
+#                     "friendword": msg.content,
+#                     "timestamp": msg.created_at.timestamp()
+#                 })
+#         return Response(history_data, status=200)
+
+
+
+
+class FetchChatHistoryView(AdrfAPIView):
+    """返回对话记录，同步redis和数据库保证完整性"""
+    permission_classes = [IsAuthenticated]
+
+    async def get(self, request):
         from .models import GenericMessage
-        friend_id=request.query_params.get('friend_id')
-        user_id=request.user.id
-        search_id=GenericMessage.get_thread_id(user_id,friend_id)
-        chat_history = GenericMessage.objects.filter(thread_id=search_id).order_by('created_at')
+        friend_id = request.query_params.get('friend_id')
+        user_id = request.user.id
+        
+        # 1. 包装静态方法或类方法 (包装数据库计算逻辑)
+        # 假设 get_thread_id 涉及数据库查询或计算
+        search_id = GenericMessage.get_thread_id(user_id, friend_id)
+
+        # 2. 包装 QuerySet 查询并立即转为 list
+        # QuerySet 本身不能在异步环境中直接遍历，必须先转成列表
+        def get_db_history():
+            return list(GenericMessage.objects.filter(thread_id=search_id).order_by('created_at'))
+
+        chat_history = await sync_to_async(get_db_history)()
+
         history_data = []
         for msg in chat_history:
-            if msg.sender_id == user_id:
-                # 我发的消息
-                history_data.append({
-                    "myword": msg.content,
-                    "timestamp": msg.created_at.timestamp()
-                })
-            else:
-                # 好友发的消息
-                history_data.append({
-                    "friendword": msg.content,
-                    "timestamp": msg.created_at.timestamp()
-                })
+            history_data.append(self.serialize_msg(msg, user_id))
+
+        # 2. 从 Redis 队列中获取还没入库的消息（解决刷新消失问题的关键）
+        # 读取队列中所有的消息 (0-0 表示从头开始读)
+        pending_entries = await redis_client.xrange("msg_write_queue")
+        
+        for m_id, content in pending_entries:
+            s_id = str(content.get(b'sender_id', b'')).decode()
+            r_id = str(content.get(b'receiver_id', b'')).decode()
+            
+            # 判断这条待入库消息是否属于当前聊天对话
+            if (s_id == str(user_id) and r_id == str(friend_id)) or \
+               (s_id == str(friend_id) and r_id == str(user_id)):
+                msg_content = content.get(b'content', b'').decode()
+                # 构造与数据库一致的格式
+                item = {
+                    "timestamp": timezone.now().timestamp(), # 临时时间戳
+                    "is_pending": True # 标识这是还没存盘的消息
+                }
+                if s_id == str(user_id):
+                    item["myword"] = msg_content
+                else:
+                    item["friendword"] = msg_content
+                history_data.append(item)
+        # 3. 按时间戳简单排序（防止 Redis 和 DB 数据交织）
+        history_data.sort(key=lambda x: x['timestamp'])
         return Response(history_data, status=200)
 
-
-
-
-
+    def serialize_msg(self, msg, user_id):
+        if msg.sender_id == user_id:
+            return {"myword": msg.content, "timestamp": msg.created_at.timestamp()}
+        else:
+            return {"friendword": msg.content, "timestamp": msg.created_at.timestamp()}
 
 
 

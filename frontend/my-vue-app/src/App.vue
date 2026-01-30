@@ -24,7 +24,6 @@ import router from '@/router'
 import { ref, onMounted, onUnmounted, watch } from 'vue';  // ← 加上 watch
 import emitter from '@/utils/eventBus.js';
 import wsService from '@/utils/websoketservice.js';
-
 const pendingCount = ref(0);
 
 const handlePendingUpdate = (count) => {
@@ -50,7 +49,10 @@ watch(
 );
 
 onMounted(() => {
-  wsService.connect();
+  if (!wsService.isConnected()){
+    wsService.connect();
+  }
+      
   emitter.on('pending-update', handlePendingUpdate);
   emitter.on('login-requested', wsService.connect);
   emitter.on('logout-requested', wsService.disconnect);

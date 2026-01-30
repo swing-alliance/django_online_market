@@ -1,4 +1,5 @@
 import emitter from "./eventBus";
+import { useMessageStore } from '@/stores/WsStore.js';
 const WS_URL = `ws://${window.location.host}/ws/status/`;
 let wsInstance = null;
 let reconnectTimer = null;
@@ -56,6 +57,7 @@ function connect() {
         resetHeartbeat(); 
         "关键的消息处理逻辑"
         try {
+            const messageStore = useMessageStore();
             const data = JSON.parse(event.data);
             if (data.type === 'pong') {
                 console.log('Pong');
@@ -63,6 +65,10 @@ function connect() {
             }
             if (data.type === 'pending_requests') {
                 emitter.emit('pending-update', data.count);
+                return; 
+            }
+            if (data.type === 'receivemessage') {
+                messageStore.handleWsMessage(data);
                 return; 
             }
             console.log('收到业务消息:', data);
@@ -124,9 +130,18 @@ export default {
     send,
     receive,
     disconnect,
+    // 1. 获取原始状态码 (0:连接中, 1:已连接, 2:关闭中, 3:已关闭)
     get readyState() {
         return wsInstance ? wsInstance.readyState : WebSocket.CLOSED;
+    },
+    // 2. 检查是否处于“健康且可用”状态
+    isConnected() {
+        return wsInstance !== null && wsInstance.readyState === WebSocket.OPEN;
+    },
+    // 3. 返回可读的状态文字信息
+    getStatusText() {
+        const states = ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'];
+        return wsInstance ? states[wsInstance.readyState] : 'CLOSED';
     }
-    
 };
 connect();

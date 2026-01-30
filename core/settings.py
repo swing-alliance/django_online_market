@@ -4,10 +4,9 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure--7#w+ct^2wdvvc8ir)o+*jrmxl7llw(095g*aj9(2@9y8rhlu+'
 DEBUG = True
+ALLOWED_HOSTS = ['*']
 
 
-
-ALLOWED_HOSTS = []
 BASE_DOMAIN = 'http://127.0.0.1:8000/'
 if not DEBUG:
     BASE_DOMAIN = 'https://api.mydomain.com/'
@@ -164,7 +163,6 @@ CORS_ORIGIN_WHITELIST = [
     "http://localhost:8080",
     "http://127.0.0.1:8080",
 ]
-
 
 
 

@@ -7,7 +7,6 @@ _db_worker_task = None
 
 class UserStatusConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        print("有链接进来了")
         global _db_worker_task
         
         # 核心逻辑：确保全局只有一个任务在运行
@@ -44,32 +43,38 @@ class UserStatusConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({"type": "pong"}))
             await RedisService.refresh_online_status(self.user_id)
         if datatype == "sendmessage":
-            # 3. 极速响应：写入 Redis 队列
             msg_payload ={
-                "type": "receivemessage",
-                "data": {
-                    "sender_id": data.get("sender_id"),
-                    "receiver_id": data.get("receiver_id"), # 建议前端直接传 ID
-                    "content": data.get("content"),
-                    "timestamp": str(data.get("timestamp"))
-                }
+                "sender_id": data.get("sender_id"),
+                "receiver_id": data.get("receiver_id"), # 建议前端直接传 ID
+                "content": data.get("content"),
+                "timestamp": str(data.get("timestamp"))
             }
             asyncio.create_task(RedisService.enqueue_send_message(
                 sender_id=data.get("sender_id"),
                 receiver_id=data.get('receiver_id'), # 建议前端直接传 ID
                 content=data.get('content')
             ))
-            if await RedisService.is_online(data.get('friend_id')):
+            is_online = await RedisService.is_online(data.get('receiver_id'))
+            if is_online:
                 """如果好友在线，就直接发给好友"""
                 await self.channel_layer.group_send(
-                    f"user_{data.get('friend_id')}",
+                    f"user_{data.get('receiver_id')}",
                     {
                         "type": "receivemessage",
                         "data": msg_payload
                     }
                 )
 
-
+    async def receivemessage(self, event):
+        """处理接收到的消息事件"""
+        data = event['data']
+        await self.send(text_data=json.dumps({
+            "type": "receivemessage",
+            "sender_id": data.get("sender_id"),
+            "receiver_id": data.get("receiver_id"),
+            "content": data.get("content"),
+            "timestamp": data.get("timestamp")
+        }))
 
     @database_sync_to_async
     def get_pending_requests(self):
