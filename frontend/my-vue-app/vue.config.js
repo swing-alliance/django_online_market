@@ -18,9 +18,9 @@ function getNetworkIp() {
 }
 
 const localIp = getNetworkIp();
-const openout = false; // 是否开启外部访问模式
-const targetIp = `http://${localIp}:8000`;
-const currentTarget = openout ? targetIp : 'http://127.0.0.1:8000';
+const openout = true; // 是否开启外部访问模式
+const targetIp = `https://${localIp}:443`;
+const currentTarget = openout ? targetIp : 'https://127.0.0.1:8000';
 
 module.exports = defineConfig({
   transpileDependencies: true,
@@ -36,14 +36,12 @@ module.exports = defineConfig({
     host: '0.0.0.0', // 允许通过 IP 访问（如手机、其他电脑）
     
     proxy: {
-      // 1. 状态监控 WebSocket 代理
       '^/ws/status': {
         target: currentTarget,
         ws: true,
         changeOrigin: true,
         secure: false,
         logLevel: 'debug',
-        // 动态重写 Cookie 域名，解决登录态失效问题
         cookieDomainRewrite: {
           'localhost': openout ? localIp : '127.0.0.1'
         },
@@ -58,6 +56,7 @@ module.exports = defineConfig({
       '^/(api|admin|media|static)': {
         target: currentTarget,
         changeOrigin: true,
+        secure: false,
         cookieDomainRewrite: {
           'localhost': openout ? localIp : '127.0.0.1'
         }
@@ -65,3 +64,4 @@ module.exports = defineConfig({
     }
   }
 });
+

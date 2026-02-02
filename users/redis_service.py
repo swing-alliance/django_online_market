@@ -1,4 +1,3 @@
-import json
 import time
 import asyncio
 import redis.asyncio as aioredis

@@ -1,18 +1,21 @@
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
 import os
+load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = 'django-insecure--7#w+ct^2wdvvc8ir)o+*jrmxl7llw(095g*aj9(2@9y8rhlu+'
-DEBUG = True
-ALLOWED_HOSTS = ['*']
+SECRET_KEY = os.getenv("SECRET_KEY")
+DEBUG = os.getenv("DEBUG")
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
 
-BASE_DOMAIN = 'http://127.0.0.1:8000/'
+
+BASE_DOMAIN = os.getenv("BASE_DOMAIN")
 if not DEBUG:
-    BASE_DOMAIN = 'https://api.mydomain.com/'
+    BASE_DOMAIN = os.getenv("PRODUCTIVE_BASE_DOMAIN")
     SECURE_COOKIES = True
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media\\')
+MEDIA_ROOT = BASE_DIR / 'media'
 os.makedirs(MEDIA_ROOT, exist_ok=True)
 INSTALLED_APPS = [
     'corsheaders',
@@ -32,7 +35,7 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
             # 确保这里的地址和端口与您的 Redis 服务器匹配
-            "hosts": [("localhost", 6379)], 
+            "hosts": [os.getenv('REDIS_URL')], 
         },
     },
 }
@@ -79,12 +82,12 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': "online_store",
-        "USER": "root",
-        "PASSWORD": "zyh123456",
-        "HOST": "127.0.0.1",
-        "PORT": "3306"
+        'ENGINE': os.getenv("DB_ENGINE", "django.db.backends.mysql"),
+        'NAME': os.getenv('DB_NAME', 'online_store'),
+        "USER": os.getenv('DB_USER', 'root'),
+        "PASSWORD": os.getenv('DB_PASSWORD', ''),
+        "HOST": os.getenv('DB_HOST', '127.0.0.1'),
+        "PORT": os.getenv('DB_PORT', '3306')
     }
 }
 
@@ -140,7 +143,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,  # 刷新时生成新refresh_token
     'BLACKLIST_AFTER_ROTATION': True,  # 旧refresh_token加入黑名单
@@ -155,14 +158,11 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-SESSION_COOKIE_AGE = 60 * 60 * 24 * 7
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-CORS_ALLOW_CREDENTIALS = True
+SESSION_COOKIE_AGE = int(os.getenv("SESSION_COOKIE_AGE", 60*60*24*7))
+SESSION_EXPIRE_AT_BROWSER_CLOSE = os.getenv("SESSION_EXPIRE_AT_BROWSER_CLOSE",False)
+CORS_ALLOW_CREDENTIALS = os.getenv("CORS_ALLOW_CREDENTIALS",True)
 # 关键！让 Django 信任前端 8080 端口发来的 POST 请求（登录、表单等）
-CORS_ORIGIN_WHITELIST = [
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-]
+CORS_ORIGIN_WHITELIST = os.getenv("CORS_ORIGIN_WHITELIST"," ").split(",")
 
 
 

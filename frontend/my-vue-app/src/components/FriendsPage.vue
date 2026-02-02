@@ -45,8 +45,7 @@ import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import { setupAxiosInterceptor } from '@/utils/AxiosInterceptor.js';
 import FriendsListCard from './FriendsListCard.vue'; 
-import  {server_base_url}  from '@/router';
-
+const server_base_url = process.env.VUE_APP_SERVER_BASE_URL;
 setupAxiosInterceptor();
 const FriendIdArray = ref([]);
 const FriendAccountNameArray = ref([]);
