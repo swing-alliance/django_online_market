@@ -1,5 +1,5 @@
-const { defineConfig } = require('@vue/cli-service');
-const os = require('os');
+const { defineConfig } = require("@vue/cli-service");
+const os = require("os");
 
 /**
  * 自动获取本机局域网 IP 地址
@@ -9,18 +9,18 @@ function getNetworkIp() {
   for (const name of Object.keys(interfaces)) {
     for (const iface of interfaces[name]) {
       // 寻找 IPv4，非回路地址 (127.0.0.1) 且运行中的网卡
-      if (iface.family === 'IPv4' && !iface.internal) {
+      if (iface.family === "IPv4" && !iface.internal) {
         return iface.address;
       }
     }
   }
-  return '127.0.0.1';
+  return "127.0.0.1";
 }
 
 const localIp = getNetworkIp();
-const openout = true; // 是否开启外部访问模式
-const targetIp = `https://${localIp}:443`;
-const currentTarget = openout ? targetIp : 'https://127.0.0.1:8000';
+const openout = false; // 是否开启外部访问模式
+const targetIp = `http://${localIp}:443`;
+const currentTarget = openout ? targetIp : "http://127.0.0.1:8000";
 
 module.exports = defineConfig({
   transpileDependencies: true,
@@ -31,37 +31,36 @@ module.exports = defineConfig({
       webSocketURL: `ws://${localIp}:8080/ws`,
       overlay: true, // 报错时在浏览器全屏显示
     },
-    
+
     port: 8080,
-    host: '0.0.0.0', // 允许通过 IP 访问（如手机、其他电脑）
-    
+    host: "0.0.0.0", // 允许通过 IP 访问（如手机、其他电脑）
+
     proxy: {
-      '^/ws/status': {
+      "^/ws/status": {
         target: currentTarget,
         ws: true,
         changeOrigin: true,
         secure: false,
-        logLevel: 'debug',
+        logLevel: "debug",
         cookieDomainRewrite: {
-          'localhost': openout ? localIp : '127.0.0.1'
+          localhost: openout ? localIp : "127.0.0.1",
         },
         onProxyReqWs: (proxyReq, req) => {
           if (req.headers.cookie) {
-            proxyReq.setHeader('Cookie', req.headers.cookie);
+            proxyReq.setHeader("Cookie", req.headers.cookie);
           }
-        }
+        },
       },
-      
+
       // 2. 普通 API 和 静态资源代理
-      '^/(api|admin|media|static)': {
+      "^/(api|admin|media|static)": {
         target: currentTarget,
         changeOrigin: true,
         secure: false,
         cookieDomainRewrite: {
-          'localhost': openout ? localIp : '127.0.0.1'
-        }
-      }
-    }
-  }
+          localhost: openout ? localIp : "127.0.0.1",
+        },
+      },
+    },
+  },
 });
-

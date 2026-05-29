@@ -3,6 +3,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from .redis_service import RedisService # 只导入 Service
 import asyncio
+from .utils.checkwords import checkwords
 _db_worker_task = None
 
 class UserStatusConsumer(AsyncWebsocketConsumer):
@@ -55,7 +56,7 @@ class UserStatusConsumer(AsyncWebsocketConsumer):
                 content=data.get('content')
             ))
             is_online = await RedisService.is_online(data.get('receiver_id'))
-            if is_online:
+            if is_online and checkwords(msg_payload["content"]):
                 """如果好友在线，就直接发给好友"""
                 await self.channel_layer.group_send(
                     f"user_{data.get('receiver_id')}",

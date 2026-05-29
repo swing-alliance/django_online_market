@@ -160,9 +160,11 @@ SIMPLE_JWT = {
 
 SESSION_COOKIE_AGE = int(os.getenv("SESSION_COOKIE_AGE", 60*60*24*7))
 SESSION_EXPIRE_AT_BROWSER_CLOSE = os.getenv("SESSION_EXPIRE_AT_BROWSER_CLOSE",False)
-CORS_ALLOW_CREDENTIALS = os.getenv("CORS_ALLOW_CREDENTIALS",True)
+
+CORS_ALLOW_CREDENTIALS = os.getenv("CORS_ALLOW_CREDENTIALS", "True").lower() in ("true", "1", "t")
 # 关键！让 Django 信任前端 8080 端口发来的 POST 请求（登录、表单等）
-CORS_ORIGIN_WHITELIST = os.getenv("CORS_ORIGIN_WHITELIST"," ").split(",")
+
+CORS_ORIGIN_WHITELIST = os.getenv("CORS_ORIGIN_WHITELIST", "http://127.0.0.1:8080").split(",")
 
 
 

@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from django.contrib.auth import get_user_model, authenticate
 from django.utils.translation import gettext_lazy as _
 from django.db import transaction,models
-from .models import UserInfo  ,UserFriendRelationship,FriendRequest
+from .models import UserInfo  ,UserFriendRelationship,FriendRequest,GenericMessage
 from django.core.exceptions import ValidationError
 from django.utils.functional import cached_property
 from django.conf import settings
@@ -11,7 +11,6 @@ import os,base64
 import datetime
 from django.utils import timezone
 from datetime import timedelta
-from pathlib import Path
 import re
 
 User = get_user_model()
@@ -345,7 +344,18 @@ class GetAvatarByIdSerializer(serializers.Serializer):
         if not avatar_file or not hasattr(avatar_file, 'url'):
             return f'{settings.BASE_DOMAIN}{DEFAULT_AVATAR_PATH}'
         return avatar_file.url
+    
 
+
+class FetchChatHistorySerializer(serializers.Serializer):
+    """获取与某好友的聊天记录"""
+    friend_account_id = serializers.CharField(required=True)
+    def validate_friend_account_id(self, value):
+        try:
+            friend_user_info = UserInfo.objects.get(account_id=value)
+            return friend_user_info.profile
+        except UserInfo.DoesNotExist:
+            raise serializers.ValidationError("好友账户ID不存在。")
 
 
 
