@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from adrf.views import APIView as AdrfAPIView
 from django.http import Http404
+from .confuse import is_validation_field_valid
 from django.db.models import Count
 import traceback
 from datetime import timedelta
@@ -88,9 +89,24 @@ class UserLogoutView(APIView):
 class FetchUserInfoView(APIView):
     "用户获取自己的信息"
     permission_classes = [IsAuthenticated] 
+    
     def get(self, request):
+        # 打印所有请求头，方便调试查看字段是否正确传入
+        validation_field = request.headers.get('ValidationField')
+        if not validation_field:
+            return Response({"detail": "缺少验证字段。"}, status=400)
+        success, message = is_validation_field_valid(validation_field)
+        if not success:
+            return Response({"detail": "时间校验失败"}, status=403)
+        print(f"--- 接收到的 ValidationField: {validation_field} ---")
+        print(f"--- 验证结果: {message} ---")
+
+        # 如果你想查看完整的头部信息，可以取消下面这行的注释
+        # print("All Request Headers:", request.headers)
+
         sessionid = request.COOKIES.get('sessionid')
         try:
+            print("调用了 FetchUserInfoView")
             user_info_instance = request.user.user_info 
         except UserInfo.DoesNotExist:
             return Response(
